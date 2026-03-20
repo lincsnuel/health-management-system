@@ -1,0 +1,76 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Spring Boot Parent -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.0.3</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.healthcore</groupId>
+    <artifactId>health-management-system</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>health-management-system</name>
+    <description>Hospital Management Microservice Platform</description>
+
+    <properties>
+        <java.version>25</java.version>
+    </properties>
+
+    <!-- Modules -->
+    <modules>
+        <!-- Services -->
+        <module>services/patient-service</module>
+        <module>services/appointment-service</module>
+        <module>services/workforce-service</module>
+        <module>services/billing-service</module>
+        <module>services/payment-service</module>
+        <module>services/subscription-service</module>
+
+        <!-- Platform -->
+        <module>platform/auth-service</module>
+        <module>platform/tenant-service</module>
+        <module>platform/notification-service</module>
+
+        <!-- Infrastructure -->
+        <module>infrastructure/api-gateway</module>
+
+        <!-- Common Modules -->
+        <module>commons/healthcore-contracts</module>
+        <module>commons/healthcore-common</module>
+    </modules>
+
+    <!-- Dependency Management for internal modules -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.healthcore</groupId>
+                <artifactId>healthcore-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.healthcore</groupId>
+                <artifactId>healthcore-contracts</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+<!--            Used gRPC BOM so versions never drift-->
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-bom</artifactId>
+                <version>1.79.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>

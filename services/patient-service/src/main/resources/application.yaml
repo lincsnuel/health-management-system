@@ -1,0 +1,29 @@
+server:
+  port: 8083
+  shutdown: graceful\
+
+grpc:
+  server:
+    port: 9001
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+spring:
+  application:
+    name: patient-service
+
+    #### Database Configurations ###
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:15432/postgres}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+#  sql:
+#    init:
+#      mode: always
