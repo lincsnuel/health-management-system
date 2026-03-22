@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class InvalidPersonNameException extends DomainException {
+import com.healthcore.healthcorecommon.exception.base.InvalidOperationException;
+
+public class InvalidPersonNameException extends InvalidOperationException {
     public InvalidPersonNameException(String message) {
         super(message);
     }

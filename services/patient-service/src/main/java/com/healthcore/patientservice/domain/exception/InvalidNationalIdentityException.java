@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class InvalidNationalIdentityException extends DomainException {
+import com.healthcore.healthcorecommon.exception.base.InvalidOperationException;
+
+public class InvalidNationalIdentityException extends InvalidOperationException {
     public InvalidNationalIdentityException(String message) {
         super(message);
     }

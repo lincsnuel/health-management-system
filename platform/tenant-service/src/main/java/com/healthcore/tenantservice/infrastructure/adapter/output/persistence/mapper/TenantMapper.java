@@ -5,7 +5,6 @@ import com.healthcore.tenantservice.domain.model.vo.*;
 import com.healthcore.tenantservice.infrastructure.adapter.output.persistence.entity.*;
 
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class TenantMapper {
 
@@ -13,8 +12,8 @@ public class TenantMapper {
     public static TenantEntity toEntity(Tenant tenant) {
         if (tenant == null) return null;
 
-        return TenantEntity.builder()
-                .id(tenant.getId().value())
+        TenantEntity entity = TenantEntity.builder()
+                .tenantId(tenant.getId().value())
                 .tenantKey(UUID.fromString(tenant.getTenantKey().value()))
                 .name(tenant.getName())
                 .status(tenant.getStatus())
@@ -26,13 +25,25 @@ public class TenantMapper {
                 .operationalSettings(toEntity(tenant.getOperationalSettings()))
                 .notificationSettings(toEntity(tenant.getNotificationSettings()))
                 .dataRetentionPolicy(toEntity(tenant.getDataRetentionPolicy()))
-                .branches(tenant.getBranches().stream()
-                        .map(TenantMapper::toEntity)
-                        .collect(Collectors.toSet()))
-                .departments(tenant.getDepartments().stream()
-                        .map(TenantMapper::toEntity)
-                        .collect(Collectors.toSet()))
                 .build();
+
+        /* ===== Attach children via aggregate methods ===== */
+
+        // Branches
+        if (tenant.getBranches() != null) {
+            tenant.getBranches().forEach(branch ->
+                    entity.addBranch(toEntity(branch))
+            );
+        }
+
+        // Departments
+        if (tenant.getDepartments() != null) {
+            tenant.getDepartments().forEach(dept ->
+                    entity.addDepartment(toEntity(dept))
+            );
+        }
+
+        return entity;
     }
 
     private static FacilityProfileEntity toEntity(FacilityProfile profile) {
@@ -83,6 +94,7 @@ public class TenantMapper {
                 .main(branch.isMain())
                 .active(branch.isActive())
                 .build();
+        // ⚠️ NO tenant assignment here → handled by TenantEntity.addBranch()
     }
 
     private static DepartmentEntity toEntity(Department dept) {
@@ -94,6 +106,7 @@ public class TenantMapper {
                 .description(dept.getDescription())
                 .active(dept.isActive())
                 .build();
+        // ⚠️ NO tenant assignment here → handled by TenantEntity.addDepartment()
     }
 
     private static BrandingSettingsEntity toEntity(BrandingSettings settings) {
@@ -154,7 +167,7 @@ public class TenantMapper {
         if (entity == null) return null;
 
         Tenant tenant = Tenant.reconstruct(
-                new TenantId(entity.getId()),
+                new TenantId(entity.getTenantId()),
                 new TenantKey(entity.getTenantKey().toString()),
                 entity.getName(),
                 entity.getStatus(),
@@ -167,11 +180,16 @@ public class TenantMapper {
                 toDomain(entity.getNotificationSettings()),
                 toDomain(entity.getDataRetentionPolicy())
         );
-                entity.getBranches().forEach(fb ->
-                        tenant.addBranch(toDomain(fb)));
 
-                entity.getDepartments().forEach(department ->
-                        tenant.addDepartment(toDomain(department)));
+        // Branches
+        entity.getBranches().forEach(branch ->
+                tenant.addBranch(toDomain(branch))
+        );
+
+        // Departments
+        entity.getDepartments().forEach(dept ->
+                tenant.addDepartment(toDomain(dept))
+        );
 
         return tenant;
     }

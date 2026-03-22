@@ -1,4 +1,4 @@
-package com.healthcore.patientservice.infrastructure.config;
+package com.healthcore.healthcorecommon.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;

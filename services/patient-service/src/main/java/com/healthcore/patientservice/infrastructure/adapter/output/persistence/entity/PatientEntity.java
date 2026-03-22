@@ -1,5 +1,6 @@
 package com.healthcore.patientservice.infrastructure.adapter.output.persistence.entity;
 
+import com.healthcore.healthcorecommon.tenant.persistence.BaseTenantEntity;
 import com.healthcore.patientservice.domain.model.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,7 +30,7 @@ import java.util.*;
 @AllArgsConstructor
 @Builder
 @ToString(exclude = {"addresses", "insurancePolicies", "responsibleParties", "documents"})
-public class PatientEntity extends BaseEntity {
+public class PatientEntity extends BaseTenantEntity {
 
     @Id
     @Column(name = "patient_id", nullable = false, updatable = false)

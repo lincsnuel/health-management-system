@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class InvalidInsurancePolicyException extends DomainException {
+import com.healthcore.healthcorecommon.exception.base.InvalidOperationException;
+
+public class InvalidInsurancePolicyException extends InvalidOperationException {
     public InvalidInsurancePolicyException(String message) {
         super(message);
     }

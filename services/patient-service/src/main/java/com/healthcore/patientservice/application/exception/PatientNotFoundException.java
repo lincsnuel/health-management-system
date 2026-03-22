@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.application.exception;
 
-public class PatientNotFoundException extends ApplicationException {
+import com.healthcore.healthcorecommon.exception.base.NotFoundException;
+
+public class PatientNotFoundException extends NotFoundException {
     public PatientNotFoundException(String message) {
         super(message);
     }

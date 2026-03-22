@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class AddressNotFoundException extends DomainException {
+import com.healthcore.healthcorecommon.exception.base.NotFoundException;
+
+public class AddressNotFoundException extends NotFoundException {
     public AddressNotFoundException(String message) {
         super(message);
     }

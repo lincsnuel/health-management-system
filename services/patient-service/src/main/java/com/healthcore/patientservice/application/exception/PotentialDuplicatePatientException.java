@@ -1,8 +1,10 @@
 package com.healthcore.patientservice.application.exception;
 
+import com.healthcore.healthcorecommon.exception.base.ConflictException;
+
 import java.time.LocalDate;
 
-public class PotentialDuplicatePatientException extends ApplicationException {
+public class PotentialDuplicatePatientException extends ConflictException {
 
     public PotentialDuplicatePatientException(String name, LocalDate dob) {
         super("A patient with similar details already exists: " + name + " (" + dob + ")");

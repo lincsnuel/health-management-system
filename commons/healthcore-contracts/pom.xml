@@ -27,7 +27,6 @@
     </scm>
     <properties>
         <java.version>25</java.version>
-        <grpc.version>1.80.0</grpc.version>
     </properties>
     <dependencies>
         <dependency>
@@ -39,7 +38,6 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
-            <version>${grpc.version}</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -47,14 +45,12 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-protobuf</artifactId>
-            <version>${grpc.version}</version>
         </dependency>
 
         <!-- gRPC stub classes -->
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
-            <version>${grpc.version}</version>
         </dependency>
 
         <dependency>

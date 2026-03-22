@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class InvalidEmailException extends DomainException {
+import com.healthcore.healthcorecommon.exception.base.InvalidOperationException;
+
+public class InvalidEmailException extends InvalidOperationException {
     public InvalidEmailException(String message) {
         super(message);
     }

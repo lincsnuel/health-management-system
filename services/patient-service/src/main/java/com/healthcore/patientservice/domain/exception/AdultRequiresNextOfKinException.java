@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class AdultRequiresNextOfKinException extends DomainException {
+import com.healthcore.healthcorecommon.exception.base.InvalidOperationException;
+
+public class AdultRequiresNextOfKinException extends InvalidOperationException {
     public AdultRequiresNextOfKinException(String message) {
         super(message);
     }

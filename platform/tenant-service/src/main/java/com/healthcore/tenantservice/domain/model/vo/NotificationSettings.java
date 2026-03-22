@@ -14,11 +14,10 @@ public record NotificationSettings(
         appointmentReminderHours = normalizeReminderHours(appointmentReminderHours);
     }
 
-    private static Boolean normalizeBoolean(Boolean value, String fieldName) {
+    private static void normalizeBoolean(Boolean value, String fieldName) {
         if (value == null) {
             throw new InvalidNotificationSettingsException(fieldName + " must not be null");
         }
-        return value;
     }
 
     private static Integer normalizeReminderHours(Integer value) {

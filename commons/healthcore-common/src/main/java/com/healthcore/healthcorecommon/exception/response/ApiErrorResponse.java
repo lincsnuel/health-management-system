@@ -1,4 +1,4 @@
-package com.healthcore.patientservice.infrastructure.adapter.input.rest.exception;
+package com.healthcore.healthcorecommon.exception.response;
 
 public record ApiErrorResponse(
         String timestamp,

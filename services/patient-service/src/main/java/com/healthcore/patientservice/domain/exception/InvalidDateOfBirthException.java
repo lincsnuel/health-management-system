@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class InvalidDateOfBirthException extends DomainException {
+import java.awt.dnd.InvalidDnDOperationException;
+
+public class InvalidDateOfBirthException extends InvalidDnDOperationException {
     public InvalidDateOfBirthException(String message) {
         super(message);
     }

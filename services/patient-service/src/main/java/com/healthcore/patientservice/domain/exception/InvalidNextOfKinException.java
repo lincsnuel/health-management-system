@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class InvalidNextOfKinException extends DomainException {
+import com.healthcore.healthcorecommon.exception.base.InvalidOperationException;
+
+public class InvalidNextOfKinException extends InvalidOperationException {
     public InvalidNextOfKinException(String message) {
         super(message);
     }

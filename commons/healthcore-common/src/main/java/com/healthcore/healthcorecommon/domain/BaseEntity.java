@@ -1,8 +1,6 @@
-package com.healthcore.patientservice.infrastructure.adapter.output.persistence.entity;
+package com.healthcore.healthcorecommon.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.*;
 import lombok.Getter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -24,6 +22,17 @@ public abstract class BaseEntity {
     @LastModifiedDate
     @Column(nullable = false)
     private Instant updatedAt;
+
+    @PrePersist
+    void onCreate() {
+        createdAt = Instant.now();
+        updatedAt = createdAt;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = Instant.now();
+    }
 
 //    @CreatedBy
 //    @Column(updatable = false)

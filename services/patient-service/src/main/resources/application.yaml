@@ -27,3 +27,15 @@ spring:
 #  sql:
 #    init:
 #      mode: always
+
+  security:
+    oauth2:
+      resourceServer:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/healthcore
+
+  logging:
+    level:
+      org:
+        springframework:
+          security=DEBUG:

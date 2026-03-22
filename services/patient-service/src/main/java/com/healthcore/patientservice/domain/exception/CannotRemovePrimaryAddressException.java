@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class CannotRemovePrimaryAddressException extends DomainException {
+import com.healthcore.healthcorecommon.exception.base.InvalidOperationException;
+
+public class CannotRemovePrimaryAddressException extends InvalidOperationException {
     public CannotRemovePrimaryAddressException(String message) {
         super(message);
     }

@@ -32,7 +32,7 @@ public class DepartmentEntity {
     private TenantEntity tenant;
 
     /* ================= HELPERS ================= */
-    public void setTenant(TenantEntity tenant) {
+    public void assignTenant(TenantEntity tenant) {
         this.tenant = tenant;
     }
 

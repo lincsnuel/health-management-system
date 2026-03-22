@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class NationalIdentityAlreadyAssignedException extends DomainException {
+import com.healthcore.healthcorecommon.exception.base.InvalidOperationException;
+
+public class NationalIdentityAlreadyAssignedException extends InvalidOperationException {
     public NationalIdentityAlreadyAssignedException(String message) {
         super(message);
     }

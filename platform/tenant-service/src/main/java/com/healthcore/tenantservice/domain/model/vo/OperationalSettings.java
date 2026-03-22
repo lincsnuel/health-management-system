@@ -22,7 +22,7 @@ public record OperationalSettings(
         workingDays = normalizeWorkingDays(workingDays);
         workingHoursStart = normalizeTime(workingHoursStart, "workingHoursStart");
         workingHoursEnd = normalizeTime(workingHoursEnd, "workingHoursEnd");
-        normalizeBoolean(allowOverbooking, "allowOverbooking");
+        normalizeBoolean(allowOverbooking);
 
         validateTimeRange(workingHoursStart, workingHoursEnd);
     }
@@ -82,11 +82,10 @@ public record OperationalSettings(
         }
     }
 
-    private static Boolean normalizeBoolean(Boolean value, String fieldName) {
+    private static void normalizeBoolean(Boolean value) {
         if (value == null) {
-            throw new InvalidOperationalSettingsException(fieldName + " must not be null");
+            throw new InvalidOperationalSettingsException("allowOverbooking" + " must not be null");
         }
-        return value;
     }
 
     private static void validateTimeRange(String start, String end) {

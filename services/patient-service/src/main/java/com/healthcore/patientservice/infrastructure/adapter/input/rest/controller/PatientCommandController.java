@@ -32,11 +32,13 @@ public class PatientCommandController {
        REGISTER NEW PATIENT
        ========================================================= */
 
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<RegisterPatientResponse> registerPatient(
             @Validated @RequestBody RegisterPatientRequest request,
             @RequestHeader("X-Tenant-Id") String tenantId
     ) {
+
+
 
         RegisterPatientCommand command =
                 commandMapper.toRegisterPatientCommand(request, tenantId);

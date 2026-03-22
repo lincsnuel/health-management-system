@@ -1,6 +1,8 @@
 package com.healthcore.patientservice.domain.exception;
 
-public class InvalidPhoneNumberException extends DomainException {
+import com.healthcore.healthcorecommon.exception.base.InvalidOperationException;
+
+public class InvalidPhoneNumberException extends InvalidOperationException {
 
     public InvalidPhoneNumberException(String message) {
         super(message);
