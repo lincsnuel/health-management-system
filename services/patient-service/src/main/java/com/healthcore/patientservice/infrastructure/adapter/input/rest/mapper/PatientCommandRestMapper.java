@@ -92,8 +92,7 @@ public class PatientCommandRestMapper {
                 request.street(),
                 request.city(),
                 request.state(),
-                request.country(),
-                true
+                request.country()
         );
     }
 
@@ -183,8 +182,7 @@ public class PatientCommandRestMapper {
                 cmd.street(),
                 cmd.city(),
                 cmd.state(),
-                cmd.country(),
-                cmd.primary()
+                cmd.country()
         );
     }
 

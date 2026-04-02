@@ -42,8 +42,7 @@ public class RegisterPatientService implements RegisterPatientUseCase {
                                 cmd.address().street(),
                                 cmd.address().city(),
                                 cmd.address().state(),
-                                cmd.address().country(),
-                                true
+                                cmd.address().country()
                         )
                 ))
                 .toList();
@@ -54,8 +53,7 @@ public class RegisterPatientService implements RegisterPatientUseCase {
                 commandAddr.street(),
                 commandAddr.city(),
                 commandAddr.state(),
-                commandAddr.country(),
-                true
+                commandAddr.country()
         );
 
         // Create patient aggregate

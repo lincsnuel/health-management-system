@@ -19,7 +19,7 @@ spring:
           plaintext: true
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:9094
     producer:
       # This tells Spring to turn your Objects/Maps into JSON strings automatically
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

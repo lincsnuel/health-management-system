@@ -39,8 +39,7 @@ public class Address {
             String street,
             String city,
             String state,
-            String country,
-            boolean primary
+            String country
     ) {
         return new Address(
                 AddressId.newId(),
@@ -48,7 +47,7 @@ public class Address {
                 city,
                 state,
                 country,
-                primary
+                true
         );
     }
 
