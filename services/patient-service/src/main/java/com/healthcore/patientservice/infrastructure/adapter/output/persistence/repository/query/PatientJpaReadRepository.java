@@ -263,4 +263,27 @@ public class PatientJpaReadRepository implements PatientReadRepository {
                 .setParameter("maxAge", maxAge)
                 .getResultList();
     }
+
+    @Override
+    public Optional<PatientContact> findByTenantIdAndPhoneNumber(String tenantId, String phoneNumber) {
+        String jpql = """
+            SELECT new com.healthcore.patientservice.application.query.model.PatientContact(
+                p.patientId,
+                p.firstName,
+                p.lastName,
+                p.contactNumber,
+                p.email
+            )
+            FROM PatientEntity p
+            WHERE p.tenantId = :tenantId
+            AND p.contactNumber = :phoneNumber
+        """;
+
+        return entityManager
+                .createQuery(jpql, PatientContact.class)
+                .setParameter("tenantId", tenantId)
+                .setParameter("phoneNumber", phoneNumber)
+                .getResultStream()
+                .findFirst();
+    }
 }

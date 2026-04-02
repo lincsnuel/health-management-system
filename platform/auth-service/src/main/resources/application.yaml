@@ -1,8 +1,66 @@
+server:
+  port: 8088
+
 spring:
   application:
     name: auth-service
 
-jwt:
-  secret: "your-very-long-and-secure-random-string-here-32-chars-min"
-  access-expiration: 900000 # 15 mins in ms
-  refresh-expiration: 604800000 # 7 days in ms
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  grpc:
+    client:
+      channels:
+        patient-service:
+          address: 'static://localhost:9001'
+          # Use 'plaintext: true' for local development without SSL
+          plaintext: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      # This tells Spring to turn your Objects/Maps into JSON strings automatically
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak-admin: # Registration ID
+            client-id: ${keycloak.admin.client-id}
+            client-secret: ${keycloak.admin.client-secret}
+            authorization-grant-type: client_credentials
+            provider: keycloak
+        provider:
+          keycloak:
+            token-uri: ${keycloak.base-url}/realms/${keycloak.realm}/protocol/openid-connect/token
+  # Standard Spring Security (for verifying tokens)
+      resourceserver:
+        jwt:
+          issuer-uri: ${keycloak.base-url}/realms/${keycloak.realm}
+
+keycloak:
+  base-url: http://localhost:8080
+  realm: healthcore
+
+  # Standard Client (Used by KeycloakTokenClient)
+  client-id: healthcore-client
+  client-secret: MPv5T4DHmQi1UZF3AJfygIRbkXBTg6r5
+
+  # Admin Client (Used by KeycloakAdminClient)
+  admin:
+    client-id: healthcore-admin-client
+    client-secret: ePnTvT0QfWn60SN8R0YpBnUvUPk70SSG
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.cloud.gateway.filter.ratelimit: DEBUG

@@ -7,7 +7,7 @@ public record TenantId(String value) {
         if (value == null) {
             throw new InvalidIdException("Tenant ID must be provided");
         }
-        value = value.trim().toUpperCase(); // normalization only
+        value = value.trim(); // normalization only
     }
 
     public static TenantId of(String tenantId) {

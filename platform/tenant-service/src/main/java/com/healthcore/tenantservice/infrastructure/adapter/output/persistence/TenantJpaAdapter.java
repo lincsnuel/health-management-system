@@ -32,4 +32,9 @@ public class TenantJpaAdapter implements TenantRepository {
         return jpaRepository.findById(UUID.fromString(id))
                 .map(TenantMapper::toDomain);
     }
+
+    @Override
+    public boolean existsBySubdomain(String candidate) {
+        return jpaRepository.existsBySubdomain(candidate);
+    }
 }

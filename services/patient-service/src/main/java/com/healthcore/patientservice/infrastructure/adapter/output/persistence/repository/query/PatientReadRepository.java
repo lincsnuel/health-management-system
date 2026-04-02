@@ -34,4 +34,6 @@ public interface PatientReadRepository {
     );
 
     List<EligiblePatientProjection> findEligiblePatients(int minAge, int maxAge);
+
+    Optional<PatientContact> findByTenantIdAndPhoneNumber(String tenantId, String phoneNumber);
 }

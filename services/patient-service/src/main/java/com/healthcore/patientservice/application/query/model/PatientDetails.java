@@ -1,6 +1,6 @@
 package com.healthcore.patientservice.application.query.model;
 
-import com.healthcore.patientservice.application.util.AgeCalculator;
+import com.healthcore.patientservice.application.common.util.AgeCalculator;
 import com.healthcore.patientservice.domain.model.enums.*;
 
 import java.time.Instant;

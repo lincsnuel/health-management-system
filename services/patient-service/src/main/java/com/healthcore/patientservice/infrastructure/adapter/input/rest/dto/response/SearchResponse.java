@@ -1,7 +1,7 @@
 package com.healthcore.patientservice.infrastructure.adapter.input.rest.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.healthcore.patientservice.application.pagination.PageResult;
+import com.healthcore.patientservice.application.query.pagination.PageResult;
 
 import java.util.List;
 

@@ -2,8 +2,8 @@ package com.healthcore.patientservice.infrastructure.adapter.input.rest.controll
 
 import com.healthcore.patientservice.application.command.model.RegisterPatientCommand;
 import com.healthcore.patientservice.application.command.model.RegisterPatientResult;
-import com.healthcore.patientservice.application.usecase.DeletePatientUseCase;
-import com.healthcore.patientservice.application.usecase.RegisterPatientUseCase;
+import com.healthcore.patientservice.application.command.usecase.DeletePatientUseCase;
+import com.healthcore.patientservice.application.command.usecase.RegisterPatientUseCase;
 import com.healthcore.patientservice.infrastructure.adapter.input.rest.dto.request.RegisterPatientRequest;
 import com.healthcore.patientservice.infrastructure.adapter.input.rest.dto.response.RegisterPatientResponse;
 import com.healthcore.patientservice.infrastructure.adapter.input.rest.mapper.PatientCommandRestMapper;

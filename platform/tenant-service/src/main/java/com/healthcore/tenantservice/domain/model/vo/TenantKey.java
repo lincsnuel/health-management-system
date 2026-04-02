@@ -5,13 +5,12 @@ import com.healthcore.tenantservice.domain.exception.InvalidTenantKeyException;
 import java.util.Objects;
 import java.util.UUID;
 
-public record TenantKey(String value) {
+public record TenantKey(UUID value) {
 
     public TenantKey {
-        if (value == null || value.isBlank()) {
+        if (value == null) {
             throw new InvalidTenantKeyException("TenantKey must not be blank");
         }
-        value = value.trim();
     }
 
     /**
@@ -19,6 +18,6 @@ public record TenantKey(String value) {
      */
     public static TenantKey newKey() {
         // Use UUID as base — can replace with more complex secure key later
-        return new TenantKey(UUID.randomUUID().toString());
+        return new TenantKey(UUID.randomUUID());
     }
 }

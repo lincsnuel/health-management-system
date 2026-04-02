@@ -1,42 +1,188 @@
 name: "health-management-system"
 
+    #Commands
+    #docker-compose up -d
+    #up: This tells Docker Compose to build (if necessary), create, and start the containers defined in your docker-compose.yml file.
+    #-d (Detached mode): This runs the containers in the background.
+    #docker-compose ps	List all running containers in the stack.
+    #docker-compose stop	- Stop the services without removing the containers.
+    #docker-compose down	Stop and remove containers, networks, and images (add -v to remove volumes too).
 services:
+  # ========================
+  # KEYCLOAK
+  # ========================
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0 # Note: Ensure version matches your needs
+    container_name: keycloak
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      # Change 1: Ensure the URL matches the service name exactly
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak_secure_pass
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # Change 2: Disable strict hostname for local dev to avoid 404s/redirect loops
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - health-net
+
+  # ========================
+  # KEYCLOAK DB
+  # ========================
+  keycloak-db:
+    image: postgres:16-alpine
+    container_name: keycloak-db
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak_secure_pass
+    healthcheck:
+      # Change 3: Use the standard postgres user for the check to ensure the engine is up
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - keycloak_data:/var/lib/postgresql/data
+    networks:
+      - health-net
+
+  # ========================
+  # PATIENT DB
+  # ========================
   patient-db:
     image: postgres:16-alpine
     container_name: patient-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: patient_user
+      POSTGRES_PASSWORD: patient_password
       POSTGRES_DB: patient_postgres_db
     ports:
       - "15432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d patient_postgres_db"]
+      test: ["CMD-SHELL", "pg_isready -U patient_user -d patient_postgres_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - health-net
     volumes:
       - patient_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  # ========================
+  # TENANT DB
+  # ========================
   tenant-db:
     image: postgres:16-alpine
     container_name: tenant-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: tenant_user
+      POSTGRES_PASSWORD: tenant_password
       POSTGRES_DB: tenant_postgres_db
     ports:
       - "15433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d tenant_postgres_db"]
+      test: ["CMD-SHELL", "pg_isready -U tenant_user -d tenant_postgres_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - health-net
     volumes:
       - tenant_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  # ========================
+  # WORKFORCE DB
+  # ========================
+  workforce-db:
+    image: postgres:16-alpine
+    container_name: workforce-db
+    environment:
+      POSTGRES_USER: workforce_user
+      POSTGRES_PASSWORD: workforce_password
+      POSTGRES_DB: workforce_postgres_db
+    ports:
+      - "15434:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U tenant_user -d workforce_postgres_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - health-net
+    volumes:
+      - workforce_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # ========================
+  # REDIS
+  # ========================
+  redis:
+    image: redis:alpine3.23
+    ports:
+      - "6379:6379"
+
+  # ========================
+  # KAFKA (KRaft Mode)
+  # ========================
+  kafka:
+    image: confluentinc/cp-kafka:7.9.6
+    container_name: healthcore-kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@healthcore-kafka:9093'
+
+      # Define three listeners: Internal, External (Host), and Controller
+      KAFKA_LISTENERS: 'INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093'
+
+      # This is the "map" Kafka sends to clients telling them where to connect
+      KAFKA_ADVERTISED_LISTENERS: 'INTERNAL://healthcore-kafka:9092,EXTERNAL://localhost:9094'
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'INTERNAL'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - health-net
+
+  # ========================
+  # ZIPKIN (Tracing)
+  # ========================
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: healthcore-zipkin
+    ports:
+      - "9411:9411"
+
+# Define the network for keycloak
+networks:
+  health-net:
+    driver: bridge
+
 volumes:
+  keycloak_data:
   patient_data:
   tenant_data:
+  workforce_data:
+  kafka_data: # Added for persistence

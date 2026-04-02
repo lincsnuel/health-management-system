@@ -4,6 +4,7 @@ public record TenantResult(
         String id,
         String tenantKey,
         String name,
+        String subdomain,
         String status
 ) {
 }

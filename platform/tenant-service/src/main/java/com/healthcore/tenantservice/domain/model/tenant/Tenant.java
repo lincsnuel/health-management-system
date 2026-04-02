@@ -23,6 +23,8 @@ public class Tenant {
     @Getter
     private final String name;
 
+    @Getter
+    private final Subdomain subdomain;
 
     /* ================= STATUS ================= */
 
@@ -76,11 +78,13 @@ public class Tenant {
             TenantId id,
             TenantKey tenantKey,
             String name,
+            Subdomain subdomain,
             SubscriptionPlanId planId
     ) {
         this.id = Objects.requireNonNull(id);
         this.tenantKey = Objects.requireNonNull(tenantKey);
         this.name = validateName(name);
+        this.subdomain = Objects.requireNonNull(subdomain);
         this.subscriptionPlanId = Objects.requireNonNull(planId);
         this.status = TenantStatus.TRIAL;
         this.setupCompleted = false;
@@ -92,12 +96,14 @@ public class Tenant {
     public static Tenant create(
             TenantKey tenantKey,
             String name,
+            Subdomain subdomain,
             SubscriptionPlanId planId
     ) {
         return new Tenant(
                 TenantId.newId(),
                 tenantKey,
                 name,
+                subdomain,
                 planId
         );
     }
@@ -107,6 +113,7 @@ public class Tenant {
             TenantId id,
             TenantKey tenantKey,
             String name,
+            Subdomain subdomain,
             TenantStatus status,
             boolean setupCompleted,
             SubscriptionPlanId planId,
@@ -117,7 +124,7 @@ public class Tenant {
             NotificationSettings notificationSettings,
             DataRetentionPolicy dataRetentionPolicy
     ) {
-        Tenant tenant = new Tenant(id, tenantKey, name, planId);
+        Tenant tenant = new Tenant(id, tenantKey, name, subdomain, planId);
         tenant.status = status;
         tenant.setupCompleted = setupCompleted;
 

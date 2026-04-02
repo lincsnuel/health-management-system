@@ -1,6 +1,7 @@
 package com.healthcore.patientservice.infrastructure.adapter.output.persistence;
 
 import com.healthcore.patientservice.domain.model.patient.Patient;
+import com.healthcore.patientservice.domain.repository.PatientCommandRepository;
 import com.healthcore.patientservice.infrastructure.adapter.output.persistence.entity.*;
 import com.healthcore.patientservice.infrastructure.adapter.output.persistence.mapper.*;
 import com.healthcore.patientservice.infrastructure.adapter.output.persistence.repository.command.PatientJpaCommandRepository;
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
-public class PatientJpaCommandAdapter implements com.healthcore.patientservice.application.command.repository.PatientCommandRepository {
+public class PatientJpaCommandAdapter implements PatientCommandRepository {
 
     private final PatientJpaCommandRepository entityRepository;
     private final PatientEntityMapper patientMapper;

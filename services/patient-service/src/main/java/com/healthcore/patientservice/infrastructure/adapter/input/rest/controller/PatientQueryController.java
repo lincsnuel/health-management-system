@@ -1,10 +1,10 @@
 package com.healthcore.patientservice.infrastructure.adapter.input.rest.controller;
 
-import com.healthcore.patientservice.application.pagination.PageResult;
+import com.healthcore.patientservice.application.query.pagination.PageResult;
 import com.healthcore.patientservice.application.query.model.PatientDetails;
 import com.healthcore.patientservice.application.query.model.PatientListItem;
 import com.healthcore.patientservice.application.query.model.PatientSummary;
-import com.healthcore.patientservice.application.usecase.PatientQueryUseCase;
+import com.healthcore.patientservice.application.query.usecase.PatientQueryUseCase;
 import com.healthcore.patientservice.infrastructure.adapter.input.rest.dto.response.*;
 import com.healthcore.patientservice.infrastructure.adapter.input.rest.mapper.PatientQueryRestMapper;
 
@@ -37,7 +37,7 @@ public class PatientQueryController {
     ) {
 
         PageResult<PatientListItem> pageResult =
-                patientQueryService.getPatients(
+                patientQueryService.getAllPatients(
                         tenantId,
                         pageNo,
                         size,

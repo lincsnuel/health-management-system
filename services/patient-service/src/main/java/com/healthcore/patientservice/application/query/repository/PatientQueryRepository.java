@@ -18,7 +18,7 @@ public interface PatientQueryRepository {
     Page<PatientSummary> searchByName(String p1, String p2, String tenantId, Pageable pageable);
 
     /** List all patients for a tenant with pagination */
-    Page<PatientListItem> findPatientsForTenant(String tenantId, Pageable pageable);
+    Page<PatientListItem> findByTenant(String tenantId, Pageable pageable);
 
     /** Get a patient detail view for a given patient */
     Optional<PatientDetails> findPatientDetails(UUID patientId, String tenantId);

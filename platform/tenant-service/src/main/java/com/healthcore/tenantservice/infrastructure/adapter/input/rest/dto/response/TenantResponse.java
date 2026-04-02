@@ -9,6 +9,7 @@ public record TenantResponse(
         String id,
         String tenantKey,
         String name,
+        String subdomain,
         TenantStatus status,
         boolean setupCompleted,
         UUID subscriptionPlanId,

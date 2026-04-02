@@ -1,6 +1,6 @@
 package com.healthcore.patientservice.infrastructure.adapter.output.persistence.entity;
 
-import com.healthcore.healthcorecommon.tenant.persistence.BaseTenantEntity;
+import com.healthcore.healthcorecommon.domain.BaseEntity;
 import com.healthcore.patientservice.domain.model.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,7 +22,7 @@ import java.util.*;
                 )
         },
         indexes = {
-                @Index(name = "idx_tenant_patient_number", columnList = "tenant_id, hospital_patient_number")
+                @Index(name = "idx_tenant_contact_number", columnList = "tenant_id, contact_number")
         }
 )
 @Getter
@@ -30,7 +30,7 @@ import java.util.*;
 @AllArgsConstructor
 @Builder
 @ToString(exclude = {"addresses", "insurancePolicies", "responsibleParties", "documents"})
-public class PatientEntity extends BaseTenantEntity {
+public class PatientEntity extends BaseEntity {
 
     @Id
     @Column(name = "patient_id", nullable = false, updatable = false)

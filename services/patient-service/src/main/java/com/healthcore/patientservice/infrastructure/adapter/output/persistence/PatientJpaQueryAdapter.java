@@ -36,7 +36,7 @@ public class PatientJpaQueryAdapter implements PatientQueryRepository {
        LIST PATIENTS FOR TENANT (SUMMARY / LIST VIEW)
        ========================= */
     @Override
-    public Page<PatientListItem> findPatientsForTenant(String tenantId, Pageable pageable) {
+    public Page<PatientListItem> findByTenant(String tenantId, Pageable pageable) {
         return repository.findPatientsForTenant(tenantId, pageable);
     }
 

@@ -12,8 +12,9 @@ public class TenantResponseMapper {
     public static TenantResponse toResponse(Tenant tenant) {
         return new TenantResponse(
                 tenant.getId().value().toString(),
-                tenant.getTenantKey().value(),
+                tenant.getTenantKey().value().toString(),
                 tenant.getName(),
+                tenant.getSubdomain().value(),
                 tenant.getStatus(),
                 tenant.isSetupCompleted(),
                 tenant.getSubscriptionPlanId().value(),

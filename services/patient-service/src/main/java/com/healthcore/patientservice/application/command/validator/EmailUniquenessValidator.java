@@ -1,7 +1,7 @@
 package com.healthcore.patientservice.application.command.validator;
 
 import com.healthcore.patientservice.application.command.model.RegisterPatientCommand;
-import com.healthcore.patientservice.application.command.repository.PatientCommandRepository;
+import com.healthcore.patientservice.domain.repository.PatientCommandRepository;
 import com.healthcore.patientservice.application.exception.DuplicatePatientEmailException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

@@ -4,15 +4,44 @@ server:
 spring:
   application:
     name: api-gateway
-  cloud:
-    gateway:
-      # If you aren't using Eureka/Consul yet, disable this to avoid conflicts
-      discovery:
-        locator:
-          enabled: false
-      routes:
-        - id: patient-service
-          uri: http://localhost:8083
-          predicates:
-            - Path=/api/v1/patients/**
-          # No filters needed for a direct 1:1 path mapping
+
+  grpc:
+    client:
+      channels:
+        tenant-service:
+          address: 'localhost:9002'
+          negotiation-type: plaintext
+            # Disable observation for this channel
+          enable-observation: false
+
+#  grpc:
+#    client:
+#      channels:
+#        tenant-service:
+#          address: 'static://localhost:9002'
+#          # Use 'plaintext: true' for local development without SSL
+#          plaintext: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/healthcore
+
+redis:
+  host: localhost
+  port: 6379
+
+kafka:
+  bootstrap-servers: localhost:9092
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.cloud.gateway.filter.ratelimit: DEBUG

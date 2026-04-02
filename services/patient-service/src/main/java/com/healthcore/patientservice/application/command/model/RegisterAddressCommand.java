@@ -5,7 +5,6 @@ public record RegisterAddressCommand(
         String street,
         String city,
         String state,
-        String country,
-        boolean primary
+        String country
 
 ) {}

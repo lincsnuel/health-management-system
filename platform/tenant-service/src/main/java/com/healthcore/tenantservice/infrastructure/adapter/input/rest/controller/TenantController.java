@@ -34,7 +34,8 @@ public class TenantController {
 
         return new TenantResult(
                 tenant.getId().value().toString(),
-                tenant.getTenantKey().value(),
+                tenant.getTenantKey().value().toString(),
+                tenant.getSubdomain().value(),
                 tenant.getName(),
                 tenant.getStatus().name()
         );

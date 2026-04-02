@@ -9,7 +9,13 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tenants")
+@Table(
+        name = "tenant",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_tenant_subdomain", columnNames = "subdomain"),
+                @UniqueConstraint(name = "uk_tenant_key", columnNames = "tenant_key")
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -28,6 +34,9 @@ public class TenantEntity {
 
     @Column(name = "name", nullable = false)
     private String name;
+
+    @Column(name = "subdomain", nullable = false, unique = true, updatable = false, length = 63)
+    private String subdomain;
 
     /* ================= STATUS ================= */
     @Enumerated(EnumType.STRING)

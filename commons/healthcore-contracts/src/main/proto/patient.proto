@@ -5,17 +5,78 @@ package patient;
 option java_package = "com.healthcore.contracts.patient";
 option java_multiple_files = true;
 
+// Custom Date message to handle LocalDate fields
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
+message Address {
+  string street = 1;
+  string city = 2;
+  string state = 3;
+  string country = 4;
+}
+
+message InsurancePolicy {
+  string provider_name = 1;
+  string policy_number = 2;
+  string plan_type = 3;
+  Date coverage_start = 4;
+  Date coverage_end = 5;
+  bool main = 6;
+}
+
+message ResponsibleParty {
+  string first_name = 1;
+  string last_name = 2;
+  string type = 3;
+  string relationship = 4;
+  string contact_number = 5;
+  Address address = 6;
+}
+
+message RegisterPatientProtoRequest {
+  string hospital_patient_number = 1;
+  string first_name = 2;
+  string last_name = 3;
+  Date date_of_birth = 4;
+  string gender = 5;
+  string email = 6;
+  string contact_number = 7;
+  string identity_type = 8;
+  string national_id_number = 9;
+  Address address = 10;
+  repeated ResponsibleParty responsible_parties = 11;
+  InsurancePolicy insurance_policy = 12;
+  string tenant_id = 13; // Added for multi-tenancy context
+}
+
+message RegisterPatientProtoResponse {
+  string patient_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
 message PatientRequest {
   string tenantId = 1;
   string patientId = 2;
+  string phoneNumber = 3;
 }
 
 message PatientResponse {
   string patientId = 1;
   string firstName = 2;
   string lastName = 3;
+  string email = 4;
 }
 
 service PatientService {
+  // New registration RPC
+  rpc RegisterPatient(RegisterPatientProtoRequest) returns (RegisterPatientProtoResponse);
+
+  // Existing RPCs
   rpc GetPatient(PatientRequest) returns (PatientResponse);
+  rpc FindByPhone(PatientRequest) returns (PatientResponse);
 }

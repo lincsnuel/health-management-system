@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package workforce;
+
+option java_package = "com.healthcore.contracts.workforce";
+option java_multiple_files = true;
+
+// --------------------
+// Shared Messages
+// --------------------
+
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
+// --------------------
+// Request / Response
+// --------------------
+
+message RegisterStaffProtoRequest {
+  string tenant_id = 1;
+  string department_id = 2;
+
+  string first_name = 3;
+  string middle_name = 4;
+  string last_name = 5;
+
+  string email = 6;
+  string phone_number = 7;
+
+  // Enums represented as strings
+  string gender = 8;
+  Date date_of_birth = 9;
+
+  string staff_type = 10;
+
+  string identity_type = 11;
+  string identity_number = 12;
+  repeated string roles = 13;
+}
+
+message RegisterStaffProtoResponse {
+  string staff_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+// --------------------
+// Service
+// --------------------
+
+service WorkforceService {
+  rpc RegisterStaff(RegisterStaffProtoRequest) returns (RegisterStaffProtoResponse);
+}

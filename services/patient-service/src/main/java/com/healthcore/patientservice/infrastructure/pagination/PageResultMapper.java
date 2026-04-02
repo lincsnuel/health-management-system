@@ -1,6 +1,6 @@
 package com.healthcore.patientservice.infrastructure.pagination;
 
-import com.healthcore.patientservice.application.pagination.PageResult;
+import com.healthcore.patientservice.application.query.pagination.PageResult;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 

@@ -14,8 +14,9 @@ public class TenantMapper {
 
         TenantEntity entity = TenantEntity.builder()
                 .tenantId(tenant.getId().value())
-                .tenantKey(UUID.fromString(tenant.getTenantKey().value()))
+                .tenantKey(tenant.getTenantKey().value())
                 .name(tenant.getName())
+                .subdomain(tenant.getSubdomain().value())
                 .status(tenant.getStatus())
                 .setupCompleted(tenant.isSetupCompleted())
                 .subscriptionPlanId(tenant.getSubscriptionPlanId().value())
@@ -168,8 +169,9 @@ public class TenantMapper {
 
         Tenant tenant = Tenant.reconstruct(
                 new TenantId(entity.getTenantId()),
-                new TenantKey(entity.getTenantKey().toString()),
+                new TenantKey(entity.getTenantKey()),
                 entity.getName(),
+                Subdomain.of(entity.getSubdomain()),
                 entity.getStatus(),
                 entity.isSetupCompleted(),
                 new SubscriptionPlanId(entity.getSubscriptionPlanId()),

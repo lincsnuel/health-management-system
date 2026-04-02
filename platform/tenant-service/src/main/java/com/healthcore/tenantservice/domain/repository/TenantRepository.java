@@ -9,4 +9,6 @@ public interface TenantRepository {
     Tenant save(Tenant tenant);
 
     Optional<Tenant> findById(String id);
+
+    boolean existsBySubdomain(String candidate);
 }
