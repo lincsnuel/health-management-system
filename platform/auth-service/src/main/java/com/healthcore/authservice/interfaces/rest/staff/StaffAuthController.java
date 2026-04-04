@@ -1,18 +1,18 @@
 package com.healthcore.authservice.interfaces.rest.staff;
 
-import com.healthcore.authservice.application.patient.dto.response.TokenResponse;
+import com.healthcore.authservice.application.common.dto.response.TokenResponse;
 import com.healthcore.authservice.application.staff.dto.request.CompleteStaffRegistrationRequest;
 import com.healthcore.authservice.application.staff.dto.request.RegisterStaffRequest;
 import com.healthcore.authservice.application.staff.dto.request.StaffLoginRequest;
 import com.healthcore.authservice.application.staff.usecase.CompleteStaffRegistrationUseCase;
 import com.healthcore.authservice.application.staff.usecase.RegisterStaffUseCase;
+import com.healthcore.authservice.application.staff.usecase.StaffLoginUseCase; // Added
 import com.healthcore.authservice.common.context.TenantContext;
-import com.healthcore.authservice.common.util.UsernameBuilder;
-import com.healthcore.authservice.infrastructure.keycloak.KeycloakTokenClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/auth/staff")
@@ -21,14 +21,13 @@ public class StaffAuthController {
 
     private final RegisterStaffUseCase registerStaffUseCase;
     private final CompleteStaffRegistrationUseCase completeRegistrationUseCase;
-    private final KeycloakTokenClient tokenClient;
+    private final StaffLoginUseCase staffLoginUseCase; // Injected UseCase
 
     /**
      * HR registers staff.
-     * The UseCase itself will pull the TenantContext.
      */
     @PostMapping("/register")
-    public Mono<ResponseEntity<String>> registerStaff(@RequestBody RegisterStaffRequest request) {
+    public Mono<ResponseEntity<String>> registerStaff(@Valid @RequestBody RegisterStaffRequest request) {
         return registerStaffUseCase.execute(request)
                 .map(ResponseEntity::ok);
     }
@@ -37,8 +36,7 @@ public class StaffAuthController {
      * Staff completes registration (Accepts invite/sets password).
      */
     @PostMapping("/register/complete")
-    public Mono<ResponseEntity<Void>> completeRegistration(@RequestBody CompleteStaffRegistrationRequest request) {
-        // Chain the context lookup so the tenantId is available for the use case
+    public Mono<ResponseEntity<Void>> completeRegistration(@Valid @RequestBody CompleteStaffRegistrationRequest request) {
         return TenantContext.getTenantId()
                 .switchIfEmpty(Mono.error(new IllegalStateException("Tenant ID missing")))
                 .flatMap(tenantId -> completeRegistrationUseCase.execute(
@@ -51,23 +49,11 @@ public class StaffAuthController {
 
     /**
      * Staff login.
+     * Now delegated to StaffLoginUseCase.
      */
     @PostMapping("/login")
-    public Mono<ResponseEntity<TokenResponse>> login(@RequestBody StaffLoginRequest request) {
-        // Use flatMap to get the tenantId before building the username
-        return TenantContext.getTenantId()
-                .switchIfEmpty(Mono.error(new IllegalStateException("Tenant ID missing")))
-                .flatMap(tenantId -> {
-                    String username = UsernameBuilder.build(request.getEmail(), tenantId);
-
-                    return tokenClient.getToken(username, request.getPassword())
-                            .map(kcToken -> {
-                                TokenResponse response = new TokenResponse();
-                                response.setAccessToken(kcToken.getAccessToken());
-                                response.setRefreshToken(kcToken.getRefreshToken());
-                                response.setExpiresIn(kcToken.getExpiresIn());
-                                return ResponseEntity.ok(response);
-                            });
-                });
+    public Mono<ResponseEntity<TokenResponse>> login(@Valid @RequestBody StaffLoginRequest request) {
+        return staffLoginUseCase.execute(request)
+                .map(ResponseEntity::ok);
     }
 }

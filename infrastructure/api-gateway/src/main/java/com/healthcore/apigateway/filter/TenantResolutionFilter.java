@@ -2,15 +2,16 @@ package com.healthcore.apigateway.filter;
 
 import com.healthcore.apigateway.grpc.TenantGrpcClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NullMarked;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.cloud.gateway.filter.*;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class TenantResolutionFilter implements GlobalFilter, Ordered {
@@ -19,58 +20,40 @@ public class TenantResolutionFilter implements GlobalFilter, Ordered {
 
     @Override
     @NullMarked
-    public Mono<Void> filter(ServerWebExchange rawExchange, GatewayFilterChain chain) {
-        /*
-            Before injecting headers:
-            Remove incoming headers
-         */
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
-        System.out.println("Before mutation: " + rawExchange.getRequest().getHeaders());
-
-        ServerWebExchange mutatedExchange = rawExchange.mutate()
-                .request(rawExchange.getRequest().mutate()
-                        .headers(headers -> {
-                            headers.remove("X-User-ID");
-                            headers.remove("X-Tenant-ID");
-                            headers.remove("X-User-Type");
-                            headers.remove("X-Roles");
-                        })
-                        .build()) // Builds the new Request
-                .build();     // Builds the new Exchange
-
-        System.out.println("After mutation: " + mutatedExchange.getRequest().getHeaders());
-
-        String host = mutatedExchange.getRequest().getHeaders().getFirst("Host");
+        String host = exchange.getRequest().getHeaders().getFirst("Host");
 
         if (host == null) {
-            return chain.filter(mutatedExchange);
+            log.debug("No host header present. Skipping tenant resolution.");
+            return chain.filter(exchange);
         }
 
         String subdomain = extractSubdomain(host);
 
-        System.out.println("Inside TenantResolutionFilter filter before return tenantGrpcClient");
-
-        // 1. Call the method directly (it already returns a Mono)
         return tenantGrpcClient.resolveTenant(subdomain)
-                // 2. flatMap now receives the ACTUAL String ID from the gRPC success
                 .flatMap(tenantId -> {
 
-                    System.out.println("Type of tenantId: " + tenantId.getClass().getName());
+                    log.debug("Resolved tenant '{}' for subdomain '{}'", tenantId, subdomain);
 
-                    // Just mutate the exchange ONCE here with the final header
-                    ServerWebExchange finalExchange = mutatedExchange.mutate()
-                            .request(r -> r.header("X-Tenant-ID", tenantId))
+                    ServerWebExchange mutatedExchange = exchange.mutate()
+                            .request(r -> r.headers(headers -> {
+                                headers.remove(GatewayHeaders.USER_ID);
+                                headers.remove(GatewayHeaders.TENANT_ID);
+                                headers.remove(GatewayHeaders.USER_TYPE);
+                                headers.remove(GatewayHeaders.ROLES);
+
+                                headers.add(GatewayHeaders.RESOLVED_TENANT_ID, tenantId);
+                            }))
                             .build();
 
-                    return chain.filter(finalExchange);
+                    return chain.filter(mutatedExchange);
                 })
                 .onErrorResume(e -> {
-                    // Log the error
-                    System.err.println("Tenant Resolution failed for host. Error: " + e.getMessage());
+                    log.error("Tenant resolution failed for subdomain '{}': {}", subdomain, e.getMessage(), e);
 
-                    mutatedExchange.getResponse().setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
-
-                    return mutatedExchange.getResponse().setComplete();
+                    exchange.getResponse().setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
+                    return exchange.getResponse().setComplete();
                 });
     }
 
@@ -80,6 +63,6 @@ public class TenantResolutionFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -1; // VERY IMPORTANT (runs first)
+        return -10; // Runs first
     }
 }

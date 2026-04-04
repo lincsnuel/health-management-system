@@ -20,6 +20,8 @@ public class OtpEventProducer {
         payload.put("email", email);
         payload.put("otp", otp);
 
+        System.out.println("Patient login OTP: " + otp);
+
         kafkaTemplate.send("send-otp", payload);
     }
 }

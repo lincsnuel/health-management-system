@@ -4,10 +4,12 @@ import com.healthcore.authservice.config.KeycloakProperties;
 import com.healthcore.authservice.infrastructure.keycloak.dto.KeycloakUserRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -69,6 +71,22 @@ public class KeycloakAdminClient {
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(Void.class);
+    }
+
+    public Mono<String> findUserIdByUsername(String username) {
+        // 1. Construct the URL string manually
+        // Result: http://localhost:8080/admin/realms/healthcore/users?username=...&exact=true
+        String url = properties.getBaseUrl() + "/admin/realms/" + properties.getRealm() +
+                "/users?username=" + username + "&exact=true";
+
+        return adminWebClient.get()
+                .uri(url) // Pass the full String directly. No UriBuilder, no magic.
+                .retrieve()
+                .bodyToFlux(Map.class)
+                .next()
+                .map(user -> (String) user.get("id"))
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found: " + username)));
     }
 
     /**

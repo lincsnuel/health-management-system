@@ -11,11 +11,10 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
     @Bean
     public ReactiveRedisTemplate<String, String> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
-        StringRedisSerializer serializer = new StringRedisSerializer();
-        RedisSerializationContext<String, String> context = RedisSerializationContext
-                .<String, String>newSerializationContext(serializer)
-                .value(serializer)
-                .build();
+        // This helper method creates a context where KEY and VALUE are both Strings
+        RedisSerializationContext<String, String> context =
+                RedisSerializationContext.fromSerializer(new StringRedisSerializer());
+
         return new ReactiveRedisTemplate<>(factory, context);
     }
 }

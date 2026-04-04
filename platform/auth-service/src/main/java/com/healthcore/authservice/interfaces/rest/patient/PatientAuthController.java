@@ -3,7 +3,7 @@ package com.healthcore.authservice.interfaces.rest.patient;
 import com.healthcore.authservice.application.patient.dto.request.InitiatePatientLoginRequest;
 import com.healthcore.authservice.application.patient.dto.request.RegisterPatientRequest;
 import com.healthcore.authservice.application.patient.dto.request.VerifyPatientOtpRequest;
-import com.healthcore.authservice.application.patient.dto.response.TokenResponse;
+import com.healthcore.authservice.application.common.dto.response.TokenResponse;
 import com.healthcore.authservice.application.patient.usecase.InitiatePatientLoginUseCase;
 import com.healthcore.authservice.application.patient.usecase.RegisterPatientUseCase;
 import com.healthcore.authservice.application.patient.usecase.VerifyPatientOtpUseCase;

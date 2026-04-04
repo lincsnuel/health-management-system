@@ -1,4 +1,4 @@
-package com.healthcore.authservice.application.patient.dto.response;
+package com.healthcore.authservice.application.common.dto.response;
 
 import lombok.Data;
 

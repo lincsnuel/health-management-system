@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
 @Order(Ordered.HIGHEST_PRECEDENCE) // Ensure this runs before security/business logic
 public class TenantWebFilter implements WebFilter {
 
-    private static final String TENANT_HEADER = "X-Tenant-ID";
+    private static final String TENANT_HEADER = "X-Resolved-Tenant-ID";
 
     @Override
     @NullMarked
