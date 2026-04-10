@@ -61,4 +61,4 @@ The platform is built to handle:
 ---
 
 ## 👤 Author
-**Emmanuel Achigbo** *Backend Engineer | Microservices & SaaS Specialist* [LinkedIn](your-linkedin-url) | [Portfolio](your-portfolio-url)
+**Emmanuel Achigbo** *Backend Engineer | Microservices & SaaS Specialist* [LinkedIn](https://www.linkedin.com/in/emmanuel-achigbo) | [Portfolio](portfolio_link)
