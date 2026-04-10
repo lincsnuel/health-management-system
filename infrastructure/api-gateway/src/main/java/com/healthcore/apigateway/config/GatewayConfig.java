@@ -39,7 +39,7 @@ public class GatewayConfig {
                 // Auth Service Route
                 // ==========================
                 .route("auth-service", r -> r
-                        .path("/auth/patient/**")
+                        .path("/auth/**")
                         .uri("http://localhost:8088")
                 )
                 .build();

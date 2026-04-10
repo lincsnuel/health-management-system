@@ -25,12 +25,23 @@ spring:
 
   #### Database Configurations ###
   datasource:
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 20
     url: ${DB_URL:jdbc:postgresql://localhost:15432/patient_postgres_db}
     username: ${DB_USERNAME:patient_user}
     password: ${DB_PASSWORD:patient_password}
   jpa:
     hibernate:
       ddl-auto: update
+
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        # Link the property to your resolver class
+        tenant_identifier_resolver: com.healthcore.healthcorecommon.tenant.persistence.TenantIdentifierResolver
+
 #  sql:
 #    init:
 #      mode: always

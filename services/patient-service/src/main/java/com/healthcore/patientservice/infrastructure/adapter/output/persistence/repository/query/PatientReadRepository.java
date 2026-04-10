@@ -14,26 +14,22 @@ public interface PatientReadRepository {
     Page<PatientSummary> searchPatients(
             String p1,
             String p2,
-            String tenantId,
             Pageable pageable
     );
 
     Page<PatientListItem> findPatientsForTenant(
-            String tenantId,
             Pageable pageable
     );
 
     Optional<PatientDetails> findPatientDetails(
-            UUID patientId,
-            String tenantId
+            UUID patientId
     );
 
     Optional<PatientContactInfo> findContactInfoByEmail(
-            String email,
-            String tenantId
+            String email
     );
 
     List<EligiblePatientProjection> findEligiblePatients(int minAge, int maxAge);
 
-    Optional<PatientContact> findByTenantIdAndPhoneNumber(String tenantId, String phoneNumber);
+    Optional<PatientContact> findByTenantIdAndPhoneNumber(String phoneNumber);
 }

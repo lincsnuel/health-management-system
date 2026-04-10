@@ -5,6 +5,24 @@ spring:
   application:
     name: auth-service
 
+  # R2DBC: Used by your Repositories/Services
+  r2dbc:
+    url: r2dbc:pool:postgresql://localhost:15436/auth_postgres_db
+    username: auth_user
+    password: auth_password
+
+  sql:
+    init:
+      mode: always
+
+  # LIQUIBASE: Used during startup for migrations
+#  liquibase:
+#    change-log: classpath:db/changelog/db.changelog-master.xml
+#    url: jdbc:postgresql://localhost:15436/auth_postgres_db
+#    user: auth_user
+#    password: auth_password
+#    enabled: true
+
   data:
     redis:
       host: localhost
@@ -14,8 +32,11 @@ spring:
     client:
       channels:
         patient-service:
-          address: 'static://localhost:9001'
-          # Use 'plaintext: true' for local development without SSL
+          address: 'static://localhost:9001' # Matches patient-service's port
+          plaintext: true
+
+        workforce-service:
+          address: 'static://localhost:9003' # Matches workforce-service's port
           plaintext: true
 
   kafka:
@@ -23,36 +44,6 @@ spring:
     producer:
       # This tells Spring to turn your Objects/Maps into JSON strings automatically
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
-  security:
-    oauth2:
-      client:
-        registration:
-          keycloak-admin: # Registration ID
-            client-id: ${keycloak.admin.client-id}
-            client-secret: ${keycloak.admin.client-secret}
-            authorization-grant-type: client_credentials
-            provider: keycloak
-        provider:
-          keycloak:
-            token-uri: ${keycloak.base-url}/realms/${keycloak.realm}/protocol/openid-connect/token
-  # Standard Spring Security (for verifying tokens)
-      resourceserver:
-        jwt:
-          issuer-uri: ${keycloak.base-url}/realms/${keycloak.realm}
-
-keycloak:
-  base-url: http://localhost:8080
-  realm: healthcore
-
-  # Standard Client (Used by KeycloakTokenClient)
-  client-id: healthcore-client
-  client-secret: MPv5T4DHmQi1UZF3AJfygIRbkXBTg6r5
-
-  # Admin Client (Used by KeycloakAdminClient)
-  admin:
-    client-id: healthcore-admin-client
-    client-secret: ePnTvT0QfWn60SN8R0YpBnUvUPk70SSG
 
 management:
   tracing:
@@ -64,3 +55,9 @@ logging:
     org.springframework.security: DEBUG
     org.springframework.security.oauth2: DEBUG
     org.springframework.cloud.gateway.filter.ratelimit: DEBUG
+
+jwt:
+  private-key-path: classpath:certs/jwt.key
+  public-key-path: classpath:certs/jwt.key.pub
+  issuer: "healthcore-auth-service"
+  audience: "healthcore-api"

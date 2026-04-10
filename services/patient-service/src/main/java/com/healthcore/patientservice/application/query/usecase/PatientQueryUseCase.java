@@ -1,6 +1,6 @@
 package com.healthcore.patientservice.application.query.usecase;
 
-import com.healthcore.patientservice.application.query.pagination.PageResult;
+import com.healthcore.patientservice.application.query.model.PageResult;
 import com.healthcore.patientservice.application.query.model.PatientDetails;
 import com.healthcore.patientservice.application.query.model.PatientListItem;
 import com.healthcore.patientservice.application.query.model.PatientSummary;
@@ -13,7 +13,6 @@ public interface PatientQueryUseCase {
        GET ALL PATIENTS (PAGINATED + SORTED)
        ========================================================= */
     PageResult<PatientListItem> getAllPatients(
-            String tenantId,
             int pageNo,
             int size,
             String sortBy,
@@ -24,8 +23,7 @@ public interface PatientQueryUseCase {
        GET PATIENT DETAILS
        ========================================================= */
     PatientDetails findPatientDetails(
-            UUID patientId,
-            String tenantId
+            UUID patientId
     );
 
     /* =========================================================
@@ -33,7 +31,6 @@ public interface PatientQueryUseCase {
        ========================================================= */
     PageResult<PatientSummary> searchPatientByName(
             String rawQuery,
-            String tenantId,
             int pageNo,
             int size
     );

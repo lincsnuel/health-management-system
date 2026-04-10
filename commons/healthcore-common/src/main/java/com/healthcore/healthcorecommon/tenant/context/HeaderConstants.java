@@ -1,6 +1,8 @@
 package com.healthcore.healthcorecommon.tenant.context;
 
-public class HeaderConstants {
+public final class HeaderConstants {
+
+    private HeaderConstants() {}
 
     public static final String TENANT_ID = "X-Tenant-ID";
     public static final String USER_ID = "X-User-ID";

@@ -26,7 +26,7 @@ public class UpdateResponsiblePartyService implements UpdateResponsiblePartyUseC
     @Override
     public void updateResponsibleParty(UpdateResponsiblePartyCommand command) {
 
-        Patient patient = loader.load(command.patientId(), command.tenantId());
+        Patient patient = loader.load(command.patientId());
 
         ResponsibleParty responsibleParty = ResponsibleParty.reconstruct(
                 ResponsiblePartyId.of(command.responsiblePartyId()),

@@ -5,24 +5,14 @@ import com.healthcore.patientservice.infrastructure.adapter.output.persistence.e
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface PatientJpaCommandRepository
         extends JpaRepository<PatientEntity, UUID> {
 
-    Optional<PatientEntity> findByPatientIdAndTenantId(
-            UUID patientId,
-            String tenantId
-    );
+    boolean existsByEmail(String email);
 
-    boolean existsByTenantIdAndEmail(
-            String tenantId,
-            String email
-    );
-
-    boolean existsByTenantIdAndFirstNameAndLastNameAndDateOfBirth(
-            String tenantId,
+    boolean existsByFirstNameAndLastNameAndDateOfBirth(
             String firstName,
             String lastName,
             LocalDate dateOfBirth

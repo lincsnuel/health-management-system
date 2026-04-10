@@ -14,9 +14,9 @@ public class PatientLoader {
 
     private final PatientCommandRepository patientRepository;
 
-    public Patient load(UUID patientId, String tenantId) {
+    public Patient load(UUID patientId) {
 
-        return patientRepository.findById(patientId, tenantId)
+        return patientRepository.findById(patientId)
                 .orElseThrow(() -> new PatientNotFoundException("Patient with id: "
                         + patientId + " not found"));
     }

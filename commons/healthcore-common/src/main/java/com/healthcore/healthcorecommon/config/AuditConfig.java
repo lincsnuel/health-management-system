@@ -1,12 +1,16 @@
 package com.healthcore.healthcorecommon.config;
 
+import com.healthcore.healthcorecommon.audit.RequestContextAuditorAware;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
+@Configuration
+@EnableJpaAuditing(auditorAwareRef = "auditorProvider")
 public class AuditConfig {
-    @Configuration
-    @EnableJpaAuditing
-    public static class BaseAuditConfig {
-        // This stays empty unless you want to add a DateTimeProvider bean
+
+    @Bean
+    public RequestContextAuditorAware auditorProvider() {
+        return new RequestContextAuditorAware();
     }
 }

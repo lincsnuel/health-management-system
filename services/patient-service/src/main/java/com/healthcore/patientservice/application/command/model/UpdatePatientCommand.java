@@ -18,7 +18,6 @@ import java.util.UUID;
  */
 public record UpdatePatientCommand(
 
-        String tenantId,
         UUID patientId,
 
         // Contact

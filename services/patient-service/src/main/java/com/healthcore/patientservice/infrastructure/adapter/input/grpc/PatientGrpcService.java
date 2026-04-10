@@ -1,6 +1,7 @@
 package com.healthcore.patientservice.infrastructure.adapter.input.grpc;
 
 import com.healthcore.contracts.patient.*;
+import com.healthcore.healthcorecommon.tenant.context.RequestContext;
 import com.healthcore.patientservice.application.command.model.*;
 import com.healthcore.patientservice.application.query.model.PatientContact;
 import com.healthcore.patientservice.application.query.model.PatientDetails;
@@ -31,9 +32,12 @@ public class PatientGrpcService extends PatientServiceGrpc.PatientServiceImplBas
     @Override
     public void registerPatient(RegisterPatientProtoRequest request,
                                 StreamObserver<RegisterPatientProtoResponse> responseObserver) {
+        // BRIDGE: Pull from gRPC Context and put into ThreadLocal so @Transactional service can see it
+        RequestContext.get().ifPresent(RequestContext::set);
+
         try {
-            log.info("Received gRPC Registration for Tenant: {}, Name: {} {}",
-                    request.getTenantId(), request.getFirstName(), request.getLastName());
+            log.info("Received gRPC Registration for Name: {} {}",
+                    request.getFirstName(), request.getLastName());
 
             // 1. Map gRPC Request -> Application Command
             RegisterPatientCommand command = mapToCommand(request);
@@ -59,12 +63,14 @@ public class PatientGrpcService extends PatientServiceGrpc.PatientServiceImplBas
                     .setMessage(ex.getMessage())
                     .build());
             responseObserver.onCompleted();
+        } finally {
+            // CRITICAL: Clear ThreadLocal to prevent memory leaks or context bleeding
+            RequestContext.clear();
         }
     }
 
     private RegisterPatientCommand mapToCommand(RegisterPatientProtoRequest req) {
         return new RegisterPatientCommand(
-                req.getTenantId(),
                 req.getHospitalPatientNumber(),
                 req.getFirstName(),
                 req.getLastName(),
@@ -115,12 +121,11 @@ public class PatientGrpcService extends PatientServiceGrpc.PatientServiceImplBas
                            StreamObserver<PatientResponse> responseObserver) {
 
         try {
-            log.info("gRPC request: tenantId={}, patientId={}",
-                    request.getTenantId(), request.getPatientId());
+            log.info("gRPC request: patientId={}", request.getPatientId());
 
             // Application layer call
             PatientDetails patient = patientQueryService.findPatientDetails(
-                    UUID.fromString(request.getPatientId()),request.getTenantId()
+                    UUID.fromString(request.getPatientId())
             );
 
             // Map Domain → Proto
@@ -144,7 +149,6 @@ public class PatientGrpcService extends PatientServiceGrpc.PatientServiceImplBas
                             StreamObserver<PatientResponse> responseObserver) {
 
         PatientContact patient = lookupService.findByPhone(
-                request.getTenantId(),
                 request.getPhoneNumber()
         );
 

@@ -6,62 +6,51 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.healthcore.authservice.application.staff.dto.request.RegisterStaffRequest;
 import com.healthcore.authservice.common.context.TenantContext;
-import com.healthcore.authservice.common.util.UsernameBuilder;
+import com.healthcore.authservice.domain.model.UserType;
 import com.healthcore.authservice.infrastructure.grpc.workforce.WorkforceGrpcClient;
-import com.healthcore.authservice.infrastructure.keycloak.KeycloakAdminClient;
-import com.healthcore.authservice.infrastructure.keycloak.mapper.KeycloakUserMapper;
+import com.healthcore.authservice.infrastructure.persistence.entity.User;
+import com.healthcore.authservice.infrastructure.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-@Slf4j
-@Service
 @RequiredArgsConstructor
+@Service
+@Slf4j
 public class RegisterStaffUseCase {
 
     private final WorkforceGrpcClient staffClient;
-    private final KeycloakAdminClient keycloakAdminClient;
+    private final UserRepository userRepository;
 
-    /**
-     * Registers a staff member reactively.
-     * Workforce gRPC -> Keycloak Admin API -> Return staffId
-     */
     public Mono<String> execute(RegisterStaffRequest request) {
-        // 1. Retrieve the tenantId from the reactive context first
+
         return TenantContext.getTenantId()
-                .switchIfEmpty(Mono.error(new IllegalStateException("Tenant ID missing from context")))
-                .flatMap(tenantId -> {
+                .switchIfEmpty(Mono.error(new IllegalStateException("Tenant ID missing")))
+                .flatMap(tenantId -> toMono(staffClient.registerStaff(request, tenantId))
+                        .flatMap(response -> {
+                            System.out.println("After grpc request");
 
-                    log.info("Initiating staff registration for email: {} in tenant: {}", request.getEmail(), tenantId);
+                            String staffId = response.getStaffId();
+                            log.info("Registering new Staff User in Auth System: staffId={}, tenantId={}", staffId, tenantId);
 
-                    // 2. Call Workforce gRPC and bridge to Mono using the retrieved tenantId
-                    return toMono(staffClient.registerStaff(request, tenantId))
-                            .flatMap(response -> {
-                                String staffId = response.getStaffId();
-                                // Build username using the email and tenantId
-                                String username = UsernameBuilder.build(request.getEmail(), tenantId);
+                            // Initializing with isNew(true) ensures we don't trigger
+                            // a SELECT query before the INSERT.
+                            User user = User.builder()
+                                    .id(staffId)
+                                    .email(request.getEmail())
+                                    .tenantId(tenantId)
+                                    .userType(UserType.STAFF)
+                                    .isEnabled(false) // Staff usually require activation or email verification
+                                    .isNew(true)      // Required because staffId is assigned manually
+                                    .build();
 
-                                // 3. Map to Keycloak user DTO (uses the new userId/userType logic)
-                                var kcUser = KeycloakUserMapper.toStaffUser(
-                                        username,
-                                        request.getEmail(),
-                                        request.getFirstName(),
-                                        request.getLastName(),
-                                        staffId,
-                                        tenantId
-                                );
-
-                                // 4. Create in Keycloak and return the staffId on success
-                                return keycloakAdminClient.createUser(kcUser)
-//                                        .then(keycloakAdminClient.assignRoles(username,
-//                                                request.getRoles()))s
-                                        .thenReturn(staffId);
-                            });
-                })
-                .doOnSuccess(id -> log.info("Staff registration completed successfully with ID: {}", id))
-                .doOnError(e -> log.error("Staff registration failed: {}", e.getMessage()));
+                            return userRepository.save(user)
+                                    .doOnSuccess(_ -> log.debug("Auth record created for staff member: {}", staffId))
+                                    .thenReturn(staffId);
+                        }))
+                .doOnError(e -> log.error("Staff registration bridge failed: {}", e.getMessage()));
     }
 
     /**

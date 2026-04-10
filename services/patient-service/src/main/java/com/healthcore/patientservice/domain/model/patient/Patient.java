@@ -21,9 +21,6 @@ public class Patient {
     private final PatientId id;
 
     @Getter
-    private final TenantId tenantId;
-
-    @Getter
     private final HospitalPatientNumber hospitalPatientNumber;
 
     @Getter
@@ -99,7 +96,6 @@ public class Patient {
 
     private Patient(
             PatientId id,
-            TenantId tenantId,
             HospitalPatientNumber hospitalPatientNumber,
             PersonName name,
             DateOfBirth dateOfBirth,
@@ -107,7 +103,6 @@ public class Patient {
             PhoneNumber phoneNumber
     ) {
         this.id = Objects.requireNonNull(id);
-        this.tenantId = Objects.requireNonNull(tenantId);
         this.hospitalPatientNumber = Objects.requireNonNull(hospitalPatientNumber);
         this.name = Objects.requireNonNull(name);
         this.dateOfBirth = Objects.requireNonNull(dateOfBirth);
@@ -119,7 +114,6 @@ public class Patient {
     /* ================= FACTORY ================= */
 
     public static Patient register(
-            TenantId tenantId,
             HospitalPatientNumber hospitalPatientNumber,
             PersonName name,
             DateOfBirth dateOfBirth,
@@ -130,7 +124,6 @@ public class Patient {
 
         Patient patient = new Patient(
                 PatientId.newId(),
-                tenantId,
                 hospitalPatientNumber,
                 name,
                 dateOfBirth,
@@ -150,7 +143,6 @@ public class Patient {
 
     public static Patient reconstitute(
             PatientId id,
-            TenantId tenantId,
             HospitalPatientNumber hospitalPatientNumber,
             PersonName name,
             DateOfBirth dateOfBirth,
@@ -161,7 +153,6 @@ public class Patient {
 
         Patient patient = new Patient(
                 id,
-                tenantId,
                 hospitalPatientNumber,
                 name,
                 dateOfBirth,

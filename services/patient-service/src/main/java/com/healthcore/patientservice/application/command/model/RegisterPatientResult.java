@@ -7,7 +7,6 @@ import java.util.UUID;
 public record RegisterPatientResult(
 
         UUID patientId,
-        String tenantId,
         String hospitalPatientNumber,
         String fullName,
         PatientStatus status

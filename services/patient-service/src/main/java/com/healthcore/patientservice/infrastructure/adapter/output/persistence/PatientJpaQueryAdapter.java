@@ -25,35 +25,34 @@ public class PatientJpaQueryAdapter implements PatientQueryRepository {
     public Page<PatientSummary> searchByName(
             String p1,
             String p2,
-            String tenantId,
             Pageable pageable
     ) {
         // Repository should already return Page<PatientSummary> via JPQL constructor expression
-        return repository.searchPatients(p1, p2, tenantId, pageable);
+        return repository.searchPatients(p1, p2, pageable);
     }
 
     /* =========================
        LIST PATIENTS FOR TENANT (SUMMARY / LIST VIEW)
        ========================= */
     @Override
-    public Page<PatientListItem> findByTenant(String tenantId, Pageable pageable) {
-        return repository.findPatientsForTenant(tenantId, pageable);
+    public Page<PatientListItem> findByTenant(Pageable pageable) {
+        return repository.findPatientsForTenant(pageable);
     }
 
     /* =========================
        GET PATIENT DETAIL BY ID
        ========================= */
     @Override
-    public Optional<PatientDetails> findPatientDetails(UUID patientId, String tenantId) {
-        return repository.findPatientDetails(patientId, tenantId);
+    public Optional<PatientDetails> findPatientDetails(UUID patientId) {
+        return repository.findPatientDetails(patientId);
     }
 
     /* =========================
        GET PATIENT CONTACT INFO BY EMAIL
        ========================= */
     @Override
-    public Optional<PatientContactInfo> findContactInfoByEmail(String email, String tenantId) {
-        return repository.findContactInfoByEmail(email, tenantId);
+    public Optional<PatientContactInfo> findContactInfoByEmail(String email) {
+        return repository.findContactInfoByEmail(email);
     }
 
     @Override

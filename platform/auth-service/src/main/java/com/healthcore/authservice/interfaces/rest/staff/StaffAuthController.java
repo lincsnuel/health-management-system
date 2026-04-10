@@ -9,6 +9,7 @@ import com.healthcore.authservice.application.staff.usecase.RegisterStaffUseCase
 import com.healthcore.authservice.application.staff.usecase.StaffLoginUseCase; // Added
 import com.healthcore.authservice.common.context.TenantContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -21,38 +22,29 @@ public class StaffAuthController {
 
     private final RegisterStaffUseCase registerStaffUseCase;
     private final CompleteStaffRegistrationUseCase completeRegistrationUseCase;
-    private final StaffLoginUseCase staffLoginUseCase; // Injected UseCase
+    private final StaffLoginUseCase staffLoginUseCase;
 
-    /**
-     * HR registers staff.
-     */
     @PostMapping("/register")
     public Mono<ResponseEntity<String>> registerStaff(@Valid @RequestBody RegisterStaffRequest request) {
+        System.out.println("Inside registerStaff");
         return registerStaffUseCase.execute(request)
-                .map(ResponseEntity::ok);
+                .map(response -> ResponseEntity.status(HttpStatus.CREATED).body(response));
     }
 
-    /**
-     * Staff completes registration (Accepts invite/sets password).
-     */
     @PostMapping("/register/complete")
-    public Mono<ResponseEntity<Void>> completeRegistration(@Valid @RequestBody CompleteStaffRegistrationRequest request) {
+    public Mono<ResponseEntity<TokenResponse>> completeRegistration(@Valid @RequestBody CompleteStaffRegistrationRequest request) {
         return TenantContext.getTenantId()
-                .switchIfEmpty(Mono.error(new IllegalStateException("Tenant ID missing")))
                 .flatMap(tenantId -> completeRegistrationUseCase.execute(
-                        request.getToken(),
+                        request.getEmail(),
                         tenantId,
                         request.getPassword()
                 ))
-                .thenReturn(ResponseEntity.ok().build());
+                .map(ResponseEntity::ok);
     }
 
-    /**
-     * Staff login.
-     * Now delegated to StaffLoginUseCase.
-     */
     @PostMapping("/login")
     public Mono<ResponseEntity<TokenResponse>> login(@Valid @RequestBody StaffLoginRequest request) {
+        // Metadata is handled by MetadataWebFilter automatically
         return staffLoginUseCase.execute(request)
                 .map(ResponseEntity::ok);
     }

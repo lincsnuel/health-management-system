@@ -1,6 +1,6 @@
 package com.healthcore.patientservice.infrastructure.adapter.input.rest.controller;
 
-import com.healthcore.patientservice.application.query.pagination.PageResult;
+import com.healthcore.patientservice.application.query.model.PageResult;
 import com.healthcore.patientservice.application.query.model.PatientDetails;
 import com.healthcore.patientservice.application.query.model.PatientListItem;
 import com.healthcore.patientservice.application.query.model.PatientSummary;
@@ -8,6 +8,7 @@ import com.healthcore.patientservice.application.query.usecase.PatientQueryUseCa
 import com.healthcore.patientservice.infrastructure.adapter.input.rest.dto.response.*;
 import com.healthcore.patientservice.infrastructure.adapter.input.rest.mapper.PatientQueryRestMapper;
 
+import com.healthcore.patientservice.infrastructure.adapter.output.persistence.mapper.PageResultMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +25,11 @@ public class PatientQueryController {
     private final PatientQueryRestMapper queryMapper;
 
     /* =========================================================
-       GET PAGINATED PATIENT SUMMARY
+       GET PAGINATED PATIENT LIST
        ========================================================= */
 
     @GetMapping
-    public ResponseEntity<SearchResponse<PatientListItemResponse>> getAllPatients(
-            @RequestParam String tenantId,
+    public ResponseEntity<PageResponse<PatientListItemResponse>> getAllPatients(
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -38,7 +38,6 @@ public class PatientQueryController {
 
         PageResult<PatientListItem> pageResult =
                 patientQueryService.getAllPatients(
-                        tenantId,
                         pageNo,
                         size,
                         sortBy,
@@ -51,20 +50,9 @@ public class PatientQueryController {
                         .map(queryMapper::toPatientListItemResponse)
                         .toList();
 
-        PageResult<PatientListItemResponse> mappedPageResult = PageResult.ofPage(
-                content,
-                pageResult.pageNumber(),
-                pageResult.pageSize(),
-                pageResult.first(),
-                pageResult.last(),
-                pageResult.hasNext(),
-                pageResult.hasPrevious(),
-                pageResult.sorted(),
-                pageResult.totalElements(),
-                pageResult.totalPages()
+        return ResponseEntity.ok(
+                PageResultMapper.toPage(pageResult, content)
         );
-
-        return ResponseEntity.ok(SearchResponse.of(mappedPageResult));
     }
 
     /* =========================================================
@@ -72,15 +60,14 @@ public class PatientQueryController {
        ========================================================= */
 
     @GetMapping("/search")
-    public ResponseEntity<SearchResponse<PatientSummaryResponse>> searchPatients(
-            @RequestParam String tenantId,
+    public ResponseEntity<PageResponse<PatientSummaryResponse>> searchPatients(
             @RequestParam String query,
             @RequestParam(defaultValue = "0") int pageNo,
             @RequestParam(defaultValue = "10") int size
     ) {
 
         PageResult<PatientSummary> pageResult =
-                patientQueryService.searchPatientByName(query, tenantId, pageNo, size);
+                patientQueryService.searchPatientByName(query, pageNo, size);
 
         List<PatientSummaryResponse> content =
                 pageResult.content()
@@ -88,20 +75,9 @@ public class PatientQueryController {
                         .map(queryMapper::toPatientSummaryResponse)
                         .toList();
 
-        PageResult<PatientSummaryResponse> mappedPageResult = PageResult.ofPage(
-                content,
-                pageResult.pageNumber(),
-                pageResult.pageSize(),
-                pageResult.first(),
-                pageResult.last(),
-                pageResult.hasNext(),
-                pageResult.hasPrevious(),
-                pageResult.sorted(),
-                pageResult.totalElements(),
-                pageResult.totalPages()
+        return ResponseEntity.ok(
+                PageResultMapper.toPage(pageResult, content)
         );
-
-        return ResponseEntity.ok(SearchResponse.of(mappedPageResult));
     }
 
     /* =========================================================
@@ -110,16 +86,14 @@ public class PatientQueryController {
 
     @GetMapping("/{patientId}")
     public ResponseEntity<PatientDetailsResponse> getPatientById(
-            @PathVariable UUID patientId,
-            @RequestParam String tenantId
+            @PathVariable UUID patientId
     ) {
 
         PatientDetails result =
-                patientQueryService.findPatientDetails(patientId, tenantId);
+                patientQueryService.findPatientDetails(patientId);
 
-        PatientDetailsResponse response =
-                queryMapper.toDetailsResponse(result);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                queryMapper.toDetailsResponse(result)
+        );
     }
 }

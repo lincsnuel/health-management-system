@@ -7,7 +7,6 @@ import java.util.UUID;
 public record UpdateResponsiblePartyCommand(
         UUID responsiblePartyId,
         UUID patientId,
-        String tenantId,
         String firstName,
         String lastName,
         String phoneNumber,

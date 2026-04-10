@@ -24,7 +24,6 @@ public class PatientEntityMapper {
         // build base PatientEntity using builder
         PatientEntity.PatientEntityBuilder builder = PatientEntity.builder()
                 .patientId(patient.getId().value())
-                .tenantId(patient.getTenantId().value())
                 .hospitalPatientNumber(patient.getHospitalPatientNumber().value())
                 .firstName(patient.getName().firstName())
                 .lastName(patient.getName().lastName())
@@ -86,7 +85,6 @@ public class PatientEntityMapper {
 
         Patient patient = Patient.reconstitute(
                 new PatientId(entity.getPatientId()),
-                new TenantId(entity.getTenantId()),
                 new HospitalPatientNumber(entity.getHospitalPatientNumber()),
                 new PersonName(entity.getFirstName(), entity.getLastName()),
                 new DateOfBirth(entity.getDateOfBirth()),

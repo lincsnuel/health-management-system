@@ -23,17 +23,13 @@ public class PatientCommandRestMapper {
        REQUEST → COMMAND
        ========================================================= */
 
-    public RegisterPatientCommand toRegisterPatientCommand(
-            RegisterPatientRequest request,
-            String tenantId
-    ) {
+    public RegisterPatientCommand toRegisterPatientCommand(RegisterPatientRequest request) {
 
         if (request == null) {
             return null;
         }
 
         return new RegisterPatientCommand(
-                tenantId,
                 request.hospitalPatientNumber(),
                 request.firstName(),
                 request.lastName(),
@@ -63,7 +59,6 @@ public class PatientCommandRestMapper {
 
         return new RegisterPatientResponse(
                 result.patientId(),
-                result.tenantId(),
                 result.hospitalPatientNumber(),
                 result.fullName(),
                 result.status().toString()

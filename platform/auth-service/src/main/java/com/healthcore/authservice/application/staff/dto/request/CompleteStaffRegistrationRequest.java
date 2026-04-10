@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class CompleteStaffRegistrationRequest {
-    private String token;      // activation token
+    private String email;
     private String password;
 }

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -46,7 +47,7 @@ public class WorkforceGrpcClient {
     /**
      * Maps LocalDate → Proto Date
      */
-    private Date mapDate(java.time.LocalDate date) {
+    private Date mapDate(LocalDate date) {
         if (date == null) return Date.newBuilder().build();
 
         return Date.newBuilder()

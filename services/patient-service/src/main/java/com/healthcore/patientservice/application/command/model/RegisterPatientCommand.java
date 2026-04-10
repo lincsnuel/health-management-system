@@ -9,7 +9,6 @@ import java.util.List;
 public record RegisterPatientCommand(
 
         /* ================== SYSTEM CONTEXT ================== */
-        String tenantId,
         String hospitalPatientNumber,
 
         /* ================== CORE IDENTITY ================== */

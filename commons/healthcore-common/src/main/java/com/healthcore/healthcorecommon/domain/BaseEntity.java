@@ -12,7 +12,7 @@ import java.time.Instant;
 
 @Getter
 @MappedSuperclass
-@EntityListeners(AuditingEntityListener.class) // This listener is what triggers the date and identity population
+@EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity {
 
     @CreatedDate
@@ -22,6 +22,13 @@ public abstract class BaseEntity {
     @LastModifiedDate
     @Column(nullable = false)
     private Instant updatedAt;
+
+    @CreatedBy
+    @Column(updatable = false)
+    private String createdBy;
+
+    @LastModifiedBy
+    private String lastModifiedBy;
 
     @PrePersist
     void onCreate() {
@@ -33,11 +40,4 @@ public abstract class BaseEntity {
     void onUpdate() {
         updatedAt = Instant.now();
     }
-
-//    @CreatedBy
-//    @Column(updatable = false)
-//    private String createdBy;
-//
-//    @LastModifiedBy
-//    private String lastModifiedBy;
 }

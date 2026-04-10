@@ -8,10 +8,9 @@ import java.util.UUID;
 
 public interface PatientCommandRepository {
 
-    boolean existsByTenantIdAndEmail(String tenantId, String email);
+    boolean existsByEmail(String email);
 
-    boolean existsByTenantIdAndFirstNameAndLastNameAndDateOfBirth(
-            String tenantId,
+    boolean existsByFirstNameAndLastNameAndDateOfBirth(
             String firstName,
             String lastName,
             LocalDate dateOfBirth
@@ -19,5 +18,5 @@ public interface PatientCommandRepository {
 
     Patient save(Patient patient);
 
-    Optional<Patient> findById(UUID patientId, String tenantId);
+    Optional<Patient> findById(UUID patientId);
 }

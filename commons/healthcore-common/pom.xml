@@ -58,6 +58,12 @@
             <artifactId>spring-context</artifactId>
         </dependency>
 
+        <!-- Shared gRPC contracts -->
+        <dependency>
+            <groupId>com.healthcore</groupId>
+            <artifactId>healthcore-contracts</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

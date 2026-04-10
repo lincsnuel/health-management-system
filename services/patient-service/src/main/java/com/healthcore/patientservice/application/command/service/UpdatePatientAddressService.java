@@ -23,7 +23,7 @@ public class UpdatePatientAddressService
     @Override
     public void updateAddress(UpdatePatientAddressCommand command) {
 
-        Patient patient = loader.load(command.patientId(), command.tenantId());
+        Patient patient = loader.load(command.patientId());
 
         Address address = Address.reconstruct(
                 AddressId.of(command.addressId()),

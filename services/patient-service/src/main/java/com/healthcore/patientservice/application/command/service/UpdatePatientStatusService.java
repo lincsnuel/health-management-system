@@ -21,7 +21,7 @@ public class UpdatePatientStatusService
     @Override
     public void updateStatus(UpdatePatientStatusCommand command) {
 
-        Patient patient = loader.load(command.patientId(), command.tenantId());
+        Patient patient = loader.load(command.patientId());
 
         patient.updateStatus(command.status());
 

@@ -5,6 +5,14 @@ spring:
   application:
     name: api-gateway
 
+  cloud:
+    gateway:
+      httpclient:
+        pool:
+          max-connections: 1000
+        connect-timeout: 2000
+        response-timeout: 5s
+
   grpc:
     client:
       channels:
@@ -21,12 +29,6 @@ spring:
 #          address: 'static://localhost:9002'
 #          # Use 'plaintext: true' for local development without SSL
 #          plaintext: true
-
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8080/realms/healthcore
 
 redis:
   host: localhost
@@ -45,3 +47,9 @@ logging:
     org.springframework.security: DEBUG
     org.springframework.security.oauth2: DEBUG
     org.springframework.cloud.gateway.filter.ratelimit: DEBUG
+
+jwt:
+  # Ensure this path matches where your .pub file is located
+  public-key-path: "classpath:certs/jwt.key.pub"
+  issuer: "healthcore-auth-service"
+  audience: "healthcore-api"

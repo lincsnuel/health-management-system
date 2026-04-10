@@ -16,8 +16,7 @@ public class PatientDuplicateDetector implements CommandValidator<RegisterPatien
     public void validate(RegisterPatientCommand command) {
 
         boolean exists =
-                patientRepository.existsByTenantIdAndFirstNameAndLastNameAndDateOfBirth(
-                        command.tenantId(),
+                patientRepository.existsByFirstNameAndLastNameAndDateOfBirth(
                         command.firstName(),
                         command.lastName(),
                         command.dateOfBirth()

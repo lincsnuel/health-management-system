@@ -19,10 +19,7 @@ public class EmailUniquenessValidator implements CommandValidator<RegisterPatien
             return;
         }
 
-        boolean exists = patientRepository.existsByTenantIdAndEmail(
-                command.tenantId(),
-                command.email()
-        );
+        boolean exists = patientRepository.existsByEmail(command.email());
 
         if (exists) {
             throw new DuplicatePatientEmailException(command.email());

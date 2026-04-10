@@ -23,7 +23,7 @@ public class UpdatePatientContactInfoService
     @Override
     public void updateContactInfo(UpdatePatientContactInfoCommand command) {
 
-        Patient patient = loader.load(command.patientId(), command.tenantId());
+        Patient patient = loader.load(command.patientId());
 
         PhoneNumber phone = PhoneNumber.of(command.phoneNumber());
         EmailAddress email = EmailAddress.of(command.email());

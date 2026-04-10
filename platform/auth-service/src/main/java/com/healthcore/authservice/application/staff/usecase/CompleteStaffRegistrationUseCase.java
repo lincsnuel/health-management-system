@@ -1,39 +1,43 @@
 package com.healthcore.authservice.application.staff.usecase;
 
-import com.healthcore.authservice.common.util.UsernameBuilder;
-import com.healthcore.authservice.infrastructure.keycloak.KeycloakAdminClient;
+import com.healthcore.authservice.application.common.dto.response.TokenResponse;
+import com.healthcore.authservice.application.common.usecase.SessionManager;
+import com.healthcore.authservice.infrastructure.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
-@Slf4j
-@Service
 @RequiredArgsConstructor
+@Service
+@Slf4j
 public class CompleteStaffRegistrationUseCase {
 
-    private final KeycloakAdminClient keycloakAdminClient;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final SessionManager sessionManager; // Injected for automatic login
 
     /**
-     * Completes registration reactively.
-     * Sequences: Set Password -> Enable User.
+     * Completes registration and returns tokens so the user is logged in immediately.
      */
-    public Mono<Void> execute(String email, String tenantId, String password) {
+    public Mono<TokenResponse> execute(String email, String tenantId, String password) {
+        return userRepository.findByEmailAndTenantId(email, tenantId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Staff member not found")))
+                .flatMap(user -> {
+                    // 1. Update user security details
+                    user.setPasswordHash(passwordEncoder.encode(password));
+                    user.setEnabled(true);
+                    user.setAsExisting();
 
-        // In Keycloak, the 'userId' is often the UUID, but if you configured
-        // Keycloak to use the username as the identifier in your API calls:
-        String username = UsernameBuilder.build(email, tenantId);
-
-        log.info("Completing registration for user: {}", username);
-
-        // 1. Set the password
-        return keycloakAdminClient.setPassword(username, password)
-                // 2. Once password is set, enable the user
-                .then(Mono.defer(() -> {
-                    log.info("Password set, now enabling user: {}", username);
-                    return keycloakAdminClient.enableUser(username);
-                }))
-                .doOnSuccess(v -> log.info("Successfully completed registration for: {}", username))
-                .doOnError(e -> log.error("Failed to complete registration for {}: {}", username, e.getMessage()));
+                    // 2. Persist the updated user
+                    return userRepository.save(user);
+                })
+                // 3. Hand off to SessionManager for token generation
+                // SessionManager will automatically pick up Metadata from the Filter!
+                .flatMap(sessionManager::createSession)
+                .doOnSuccess(_ -> log.info("Staff registration completed and session created for: {}", email));
     }
 }

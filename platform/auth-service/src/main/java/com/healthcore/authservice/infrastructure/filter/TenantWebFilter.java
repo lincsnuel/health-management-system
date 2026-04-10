@@ -11,29 +11,34 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 /**
- * Reactive Filter that extracts the X-Tenant-ID header and
- * puts it into the Reactor Context for downstream use.
+ * Reactive Filter that extracts Tenant and User metadata and
+ * propagates it via Reactor Context.
  */
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE) // Ensure this runs before security/business logic
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class TenantWebFilter implements WebFilter {
 
     private static final String TENANT_HEADER = "X-Resolved-Tenant-ID";
+    private static final String USER_ID_HEADER = "X-User-ID"; // Standard header from Gateway/Security
 
     @Override
     @NullMarked
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        // 1. Extract the header from the reactive request
+        // 1. Extract headers
         String tenantId = exchange.getRequest().getHeaders().getFirst(TENANT_HEADER);
+        String userId = exchange.getRequest().getHeaders().getFirst(USER_ID_HEADER);
 
-        // 2. Pass the request down the chain
+        // 2. Pass down the chain and write to context
         return chain.filter(exchange)
-                // 3. Attach the tenantId to the "Context" of the entire stream
                 .contextWrite(context -> {
+                    var ctx = context;
                     if (tenantId != null) {
-                        return context.put(TenantContext.TENANT_KEY, tenantId);
+                        ctx = ctx.put(TenantContext.TENANT_KEY, tenantId);
                     }
-                    return context;
+                    if (userId != null) {
+                        ctx = ctx.put(TenantContext.USER_ID_KEY, userId);
+                    }
+                    return ctx;
                 });
     }
 }

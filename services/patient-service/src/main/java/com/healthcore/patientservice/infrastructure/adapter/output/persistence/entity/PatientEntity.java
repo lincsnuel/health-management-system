@@ -1,6 +1,6 @@
 package com.healthcore.patientservice.infrastructure.adapter.output.persistence.entity;
 
-import com.healthcore.healthcorecommon.domain.BaseEntity;
+import com.healthcore.healthcorecommon.tenant.persistence.BaseTenantEntity;
 import com.healthcore.patientservice.domain.model.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,7 +22,9 @@ import java.util.*;
                 )
         },
         indexes = {
-                @Index(name = "idx_tenant_contact_number", columnList = "tenant_id, contact_number")
+                @Index(name = "idx_tenant_list_page", columnList = "tenant_id, status, created_at"),
+                @Index(name = "idx_tenant_contact_number", columnList = "tenant_id, contact_number"),
+                @Index(name = "idx_patient_names", columnList = "firstName, lastName")
         }
 )
 @Getter
@@ -30,20 +32,16 @@ import java.util.*;
 @AllArgsConstructor
 @Builder
 @ToString(exclude = {"addresses", "insurancePolicies", "responsibleParties", "documents"})
-public class PatientEntity extends BaseEntity {
+public class PatientEntity extends BaseTenantEntity {
 
     @Id
     @Column(name = "patient_id", nullable = false, updatable = false)
     private UUID patientId;
 
-    @Column(name = "tenant_id", nullable = false, updatable = false, length = 50)
-    private String tenantId;
-
     @Column(nullable = false, length = 30)
     private String hospitalPatientNumber;
 
     /* ================== BASIC IDENTITY ================== */
-
     @Column(nullable = false, length = 40)
     private String firstName;
 
@@ -71,12 +69,10 @@ public class PatientEntity extends BaseEntity {
     private String occupation;
 
     /* ================== CONTACT ================== */
-
     @Column(nullable = false, length = 15)
     private String contactNumber;
 
     /* ================== MEDICAL DESCRIPTORS ================== */
-
     @Enumerated(EnumType.STRING)
     @Column(length = 15)
     private BloodGroup bloodGroup;
@@ -90,13 +86,11 @@ public class PatientEntity extends BaseEntity {
     private DisabilityStatus disabilityStatus;
 
     /* ================== SOCIOCULTURAL ================== */
-
     @Enumerated(EnumType.STRING)
     @Column(length = 30)
     private Religion religion;
 
     /* ================== IDENTITY DOCUMENT ================== */
-
     @Enumerated(EnumType.STRING)
     @Column(name = "national_id_type", length = 30)
     private IdentityType identityType;
@@ -105,7 +99,6 @@ public class PatientEntity extends BaseEntity {
     private String nationalIdNumber;
 
     /* ================== ADDRESSES ================== */
-
     @OneToMany(
             mappedBy = "patient",
             cascade = CascadeType.ALL,
@@ -116,7 +109,6 @@ public class PatientEntity extends BaseEntity {
     private Set<AddressEntity> addresses = new HashSet<>();
 
     /* ================== RESPONSIBLE PARTIES ================== */
-
     @OneToMany(
             mappedBy = "patient",
             cascade = CascadeType.ALL,
@@ -127,7 +119,6 @@ public class PatientEntity extends BaseEntity {
     private Set<ResponsiblePartyEntity> responsibleParties = new HashSet<>();
 
     /* ================== INSURANCE ================== */
-
     @OneToMany(
             mappedBy = "patient",
             cascade = CascadeType.ALL,
@@ -138,7 +129,6 @@ public class PatientEntity extends BaseEntity {
     private Set<PatientInsuranceEntity> insurancePolicies = new HashSet<>();
 
     /* ================== DOCUMENTS ================== */
-
     @OneToMany(
             mappedBy = "patient",
             cascade = CascadeType.ALL,
@@ -149,7 +139,6 @@ public class PatientEntity extends BaseEntity {
     private Set<PatientDocumentEntity> documents = new HashSet<>();
 
     /* ================== STATUS ================== */
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PatientStatus status;

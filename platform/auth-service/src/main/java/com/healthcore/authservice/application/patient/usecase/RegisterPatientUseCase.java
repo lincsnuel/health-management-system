@@ -6,10 +6,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.healthcore.authservice.application.patient.dto.request.RegisterPatientRequest;
 import com.healthcore.authservice.common.context.TenantContext;
-import com.healthcore.authservice.common.util.UsernameBuilder;
+import com.healthcore.authservice.domain.model.UserType;
 import com.healthcore.authservice.infrastructure.grpc.patient.PatientGrpcClient;
-import com.healthcore.authservice.infrastructure.keycloak.KeycloakAdminClient;
-import com.healthcore.authservice.infrastructure.keycloak.mapper.KeycloakUserMapper;
+import com.healthcore.authservice.infrastructure.persistence.entity.User;
+import com.healthcore.authservice.infrastructure.persistence.repository.UserRepository;
 import com.healthcore.contracts.patient.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,60 +20,52 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.util.stream.Collectors;
 
-@Slf4j
-@Service
 @RequiredArgsConstructor
+@Service
+@Slf4j
 public class RegisterPatientUseCase {
 
     private final PatientGrpcClient patientClient;
-    private final KeycloakAdminClient keycloakAdminClient;
+    private final UserRepository userRepository;
 
-    /**
-     * Registers a Patient reactively with full profile data
-     */
     public Mono<String> execute(RegisterPatientRequest request) {
-        // 1. Start by retrieving the tenantId from the reactive context
         return TenantContext.getTenantId()
-                .switchIfEmpty(Mono.error(new IllegalStateException("Tenant ID missing from context")))
-                .flatMap(tenantId -> {
+                .switchIfEmpty(Mono.error(new IllegalStateException("Tenant ID missing")))
+                .flatMap(tenantId -> toMono(patientClient.registerPatient(
+                        mapToGrpcRequest(request), tenantId))
+                        .flatMap(response -> {
+                            if (!response.getSuccess()) {
+                                log.warn("Patient registration rejected by Patient Service: {}", response.getMessage());
+                                return Mono.error(new RuntimeException(response.getMessage()));
+                            }
 
-                    // 2. Map Record to gRPC Message using the retrieved tenantId
-                    var grpcRequest = mapToGrpcRequest(request, tenantId);
+                            String patientId = response.getPatientId();
+                            String normalizedPhone = request.contactNumber().trim();
 
-                    // 3. Execute gRPC call and convert ListenableFuture to Mono
-                    return toMono(patientClient.registerPatient(grpcRequest))
-                            .flatMap(response -> {
-                                if (!response.getSuccess()) {
-                                    return Mono.error(new RuntimeException("Patient Service Error: " + response.getMessage()));
-                                }
+                            log.info("Registering new Patient User in Auth System: patientId={}, tenantId={}",
+                                    patientId, tenantId);
 
-                                String patientId = response.getPatientId();
-                                // Use the tenantId from our outer scope
-                                String username = UsernameBuilder.build(request.contactNumber(), tenantId);
+                            // We use the safer Persistable pattern here
+                            User user = User.builder()
+                                    .id(patientId) // External ID from gRPC response
+                                    .email(request.email())
+                                    .phoneNumber(normalizedPhone)
+                                    .tenantId(tenantId)
+                                    .userType(UserType.PATIENT)
+                                    .isEnabled(true)
+                                    .isNew(true) // EXPLICIT: Tells R2DBC to perform INSERT, not UPDATE
+                                    .build();
 
-                                // 4. Map to Keycloak User (Using the new userId + userType pattern)
-                                var kcUser = KeycloakUserMapper.toPatientUser(
-                                        username,
-                                        request.email(),
-                                        request.firstName(),
-                                        request.lastName(),
-                                        patientId,
-                                        tenantId
-                                );
-
-                                // 5. Create user in Keycloak and return the patientId
-                                return keycloakAdminClient.createUser(kcUser)
-//                                        .then(keycloakAdminClient.assignRoles(username, request.roles()))
-                                        .thenReturn(patientId);
-                            });
-                })
-                .doOnError(e -> log.error("Patient registration failed for phone {}: {}",
-                        request.contactNumber(), e.getMessage()));
+                            return userRepository.save(user)
+                                    .doOnSuccess(_ -> log.debug("Auth record created for patient: {}", patientId))
+                                    .thenReturn(patientId);
+                        }))
+                .doOnError(e -> log.error("Critical failure during patient registration: {}", e.getMessage()));
     }
 
     // --- Helper Methods remain largely the same but ensure they are called within the reactive chain ---
 
-    private RegisterPatientProtoRequest mapToGrpcRequest(RegisterPatientRequest req, String tenantId) {
+    private RegisterPatientProtoRequest mapToGrpcRequest(RegisterPatientRequest req) {
         var builder = RegisterPatientProtoRequest.newBuilder()
                 .setHospitalPatientNumber(req.hospitalPatientNumber())
                 .setFirstName(req.firstName())
@@ -81,8 +73,7 @@ public class RegisterPatientUseCase {
                 .setDateOfBirth(toDateMessage(req.dateOfBirth()))
                 .setGender(normalize(req.gender()))
                 .setEmail(req.email() != null ? req.email() : "")
-                .setContactNumber(req.contactNumber())
-                .setTenantId(tenantId);
+                .setContactNumber(req.contactNumber());
 
         if (req.identityType() != null) builder.setIdentityType(req.identityType());
         if (req.nationalIdNumber() != null) builder.setNationalIdNumber(req.nationalIdNumber());

@@ -9,53 +9,6 @@ name: "health-management-system"
     #docker-compose down	Stop and remove containers, networks, and images (add -v to remove volumes too).
 services:
   # ========================
-  # KEYCLOAK
-  # ========================
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0 # Note: Ensure version matches your needs
-    container_name: keycloak
-    command: start-dev
-    environment:
-      KC_DB: postgres
-      # Change 1: Ensure the URL matches the service name exactly
-      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak_secure_pass
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      # Change 2: Disable strict hostname for local dev to avoid 404s/redirect loops
-      KC_HOSTNAME_STRICT: "false"
-      KC_HTTP_ENABLED: "true"
-    ports:
-      - "8080:8080"
-    depends_on:
-      keycloak-db:
-        condition: service_healthy
-    networks:
-      - health-net
-
-  # ========================
-  # KEYCLOAK DB
-  # ========================
-  keycloak-db:
-    image: postgres:16-alpine
-    container_name: keycloak-db
-    environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: keycloak_secure_pass
-    healthcheck:
-      # Change 3: Use the standard postgres user for the check to ensure the engine is up
-      test: ["CMD-SHELL", "pg_isready -U keycloak"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - keycloak_data:/var/lib/postgresql/data
-    networks:
-      - health-net
-
-  # ========================
   # PATIENT DB
   # ========================
   patient-db:
@@ -125,6 +78,29 @@ services:
     restart: unless-stopped
 
   # ========================
+  # AUTH DB (R2DBC)
+  # ========================
+  auth-db:
+    image: postgres:16-alpine
+    container_name: auth-db
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_password
+      POSTGRES_DB: auth_postgres_db
+    ports:
+      - "15436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth_postgres_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - health-net
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # ========================
   # REDIS
   # ========================
   redis:
@@ -181,8 +157,8 @@ networks:
     driver: bridge
 
 volumes:
-  keycloak_data:
   patient_data:
   tenant_data:
   workforce_data:
-  kafka_data: # Added for persistence
+  kafka_data:
+  auth_data: # Ensure this is added

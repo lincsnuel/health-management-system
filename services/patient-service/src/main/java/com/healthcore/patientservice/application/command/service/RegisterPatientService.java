@@ -1,5 +1,6 @@
 package com.healthcore.patientservice.application.command.service;
 
+import com.healthcore.healthcorecommon.tenant.context.RequestContext;
 import com.healthcore.patientservice.application.command.model.RegisterPatientCommand;
 import com.healthcore.patientservice.application.command.model.RegisterPatientResult;
 import com.healthcore.patientservice.domain.repository.PatientCommandRepository;
@@ -27,6 +28,9 @@ public class RegisterPatientService implements RegisterPatientUseCase {
 
     @Override
     public RegisterPatientResult registerPatient(RegisterPatientCommand command) {
+
+        System.out.println("---------Tenant ID-----------");
+        System.out.println(RequestContext.getTenantId());
 
         validators.forEach(v -> v.validate(command));
 
@@ -58,7 +62,6 @@ public class RegisterPatientService implements RegisterPatientUseCase {
 
         // Create patient aggregate
         Patient patient = Patient.register(
-                TenantId.of(command.tenantId()),
                 HospitalPatientNumber.of(command.hospitalPatientNumber()),
                 PersonName.of(command.firstName(), command.lastName()),
                 DateOfBirth.of(command.dateOfBirth()),
@@ -99,11 +102,11 @@ public class RegisterPatientService implements RegisterPatientUseCase {
             patient.addInsurance(insurance);
         }
 
+        // Hibernate tenant filter ensures this save is tenant-aware
         patientRepository.save(patient);
 
         return new RegisterPatientResult(
                 patient.getId().value(),
-                patient.getTenantId().value(),
                 patient.getHospitalPatientNumber().value(),
                 patient.getName().getFullName(),
                 patient.getStatus()

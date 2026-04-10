@@ -15,16 +15,16 @@ public interface PatientQueryRepository {
        ========================= */
 
     /** Search patients by name for UI summary view */
-    Page<PatientSummary> searchByName(String p1, String p2, String tenantId, Pageable pageable);
+    Page<PatientSummary> searchByName(String p1, String p2, Pageable pageable);
 
     /** List all patients for a tenant with pagination */
-    Page<PatientListItem> findByTenant(String tenantId, Pageable pageable);
+    Page<PatientListItem> findByTenant(Pageable pageable);
 
     /** Get a patient detail view for a given patient */
-    Optional<PatientDetails> findPatientDetails(UUID patientId, String tenantId);
+    Optional<PatientDetails> findPatientDetails(UUID patientId);
 
     /** Get basic contact info for a patient by email (used in validations or messaging) */
-    Optional<PatientContactInfo> findContactInfoByEmail(String email, String tenantId);
+    Optional<PatientContactInfo> findContactInfoByEmail(String email);
 
     /** Get list of patients eligible for a service */
     List<EligiblePatientProjection> findEligiblePatients(int minAge, int maxAge);

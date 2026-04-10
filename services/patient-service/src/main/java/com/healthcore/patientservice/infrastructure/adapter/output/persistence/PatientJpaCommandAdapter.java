@@ -18,10 +18,6 @@ public class PatientJpaCommandAdapter implements PatientCommandRepository {
 
     private final PatientJpaCommandRepository entityRepository;
     private final PatientEntityMapper patientMapper;
-    private final AddressEntityMapper addressMapper;
-    private final InsuranceEntityMapper insuranceMapper;
-    private final ResponsiblePartyEntityMapper responsiblePartyMapper;
-    private final DocumentEntityMapper documentMapper;
 
     /* =========================
        CREATE / UPDATE
@@ -41,8 +37,8 @@ public class PatientJpaCommandAdapter implements PatientCommandRepository {
     /* =========================
        DATABASE QUERY OPERATIONS
        ========================= */
-    public Optional<Patient> findById(UUID patientId, String tenantId) {
-        return entityRepository.findByPatientIdAndTenantId(patientId, tenantId)
+    public Optional<Patient> findById(UUID patientId) {
+        return entityRepository.findById(patientId)
                 .map(patientMapper::toDomain);
     }
 
@@ -50,19 +46,18 @@ public class PatientJpaCommandAdapter implements PatientCommandRepository {
        DUPLICATE CHECKS
        ========================= */
     @Override
-    public boolean existsByTenantIdAndEmail(String tenantId, String email) {
-        return entityRepository.existsByTenantIdAndEmail(tenantId, email);
+    public boolean existsByEmail(String email) {
+        return entityRepository.existsByEmail(email);
     }
 
     @Override
-    public boolean existsByTenantIdAndFirstNameAndLastNameAndDateOfBirth(
-            String tenantId,
+    public boolean existsByFirstNameAndLastNameAndDateOfBirth(
             String firstName,
             String lastName,
             LocalDate dateOfBirth
     ) {
-        return entityRepository.existsByTenantIdAndFirstNameAndLastNameAndDateOfBirth(
-                tenantId, firstName, lastName, dateOfBirth
+        return entityRepository.existsByFirstNameAndLastNameAndDateOfBirth(
+                firstName, lastName, dateOfBirth
         );
     }
 }

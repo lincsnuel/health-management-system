@@ -11,9 +11,9 @@ public class PatientLookupService {
 
     private final PatientReadRepository repository;
 
-    public PatientContact findByPhone(String tenantId, String phone) {
+    public PatientContact findByPhone(String phone) {
 
-        return repository.findByTenantIdAndPhoneNumber(tenantId, phone)
+        return repository.findByTenantIdAndPhoneNumber(phone)
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
     }
 }

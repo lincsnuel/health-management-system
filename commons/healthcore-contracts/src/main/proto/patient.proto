@@ -50,7 +50,6 @@ message RegisterPatientProtoRequest {
   Address address = 10;
   repeated ResponsibleParty responsible_parties = 11;
   InsurancePolicy insurance_policy = 12;
-  string tenant_id = 13; // Added for multi-tenancy context
 }
 
 message RegisterPatientProtoResponse {
@@ -60,7 +59,6 @@ message RegisterPatientProtoResponse {
 }
 
 message PatientRequest {
-  string tenantId = 1;
   string patientId = 2;
   string phoneNumber = 3;
 }

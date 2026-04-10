@@ -23,7 +23,7 @@ public class UpdatePatientInsuranceService
     @Override
     public void updateInsurance(UpdatePatientInsuranceCommand command) {
 
-        Patient patient = loader.load(command.patientId(), command.tenantId());
+        Patient patient = loader.load(command.patientId());
 
         InsurancePolicy policy = InsurancePolicy.reconstruct(
                 InsurancePolicyId.of(command.id()),

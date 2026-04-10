@@ -1,7 +1,7 @@
 package com.healthcore.patientservice.application.query.service;
 
 import com.healthcore.patientservice.application.exception.PatientNotFoundException;
-import com.healthcore.patientservice.application.query.pagination.PageResult;
+import com.healthcore.patientservice.application.query.model.PageResult;
 import com.healthcore.patientservice.application.query.model.PatientDetails;
 import com.healthcore.patientservice.application.query.model.PatientListItem;
 import com.healthcore.patientservice.application.query.model.PatientSummary;
@@ -29,9 +29,9 @@ public class PatientQueryService implements PatientQueryUseCase {
        GET PATIENT DETAILS (WITH ADDRESSES & INSURANCES)
        ========================================================= */
     @Override
-    public PatientDetails findPatientDetails(UUID patientId, String tenantId) {
+    public PatientDetails findPatientDetails(UUID patientId) {
 
-        return queryRepository.findPatientDetails(patientId, tenantId)
+        return queryRepository.findPatientDetails(patientId)
                 .orElseThrow(() ->
                         new PatientNotFoundException("Patient with id " + patientId + " not found"));
     }
@@ -40,7 +40,6 @@ public class PatientQueryService implements PatientQueryUseCase {
        GET ALL PATIENTS IN TENANT (LIST PAGE)
        ========================================================= */
     public PageResult<PatientListItem> getAllPatients(
-            String tenantId,
             int pageNo,
             int size,
             String sortBy,
@@ -54,7 +53,7 @@ public class PatientQueryService implements PatientQueryUseCase {
         Pageable pageable = PageRequest.of(pageNo, size, sort);
 
         Page<PatientListItem> page =
-                queryRepository.findByTenant(tenantId, pageable);
+                queryRepository.findByTenant(pageable);
 
         return PageResult.ofPage(
                 page.getContent(),
@@ -76,7 +75,6 @@ public class PatientQueryService implements PatientQueryUseCase {
     @Override
     public PageResult<PatientSummary> searchPatientByName(
             String rawQuery,
-            String tenantId,
             int pageNo,
             int size
     ) {
@@ -108,7 +106,7 @@ public class PatientQueryService implements PatientQueryUseCase {
 
         // Repository returns Page<PatientSummary> (projection)
         Page<PatientSummary> page =
-                queryRepository.searchByName(p1, p2, tenantId, pageable);
+                queryRepository.searchByName(p1, p2, pageable);
 
         // Convert Spring Page -> PageResult
         return PageResult.ofPage(

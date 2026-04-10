@@ -6,7 +6,6 @@ import java.util.UUID;
 public record UpdatePatientInsuranceCommand(
         UUID id,
         UUID patientId,
-        String tenantId,
         String providerName,
         String policyNumber,
         String planType,

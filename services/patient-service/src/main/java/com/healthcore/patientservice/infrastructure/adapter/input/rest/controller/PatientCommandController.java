@@ -41,7 +41,7 @@ public class PatientCommandController {
 
 
         RegisterPatientCommand command =
-                commandMapper.toRegisterPatientCommand(request, tenantId);
+                commandMapper.toRegisterPatientCommand(request);
 
         RegisterPatientResult result =
                 registerPatientService.registerPatient(command);

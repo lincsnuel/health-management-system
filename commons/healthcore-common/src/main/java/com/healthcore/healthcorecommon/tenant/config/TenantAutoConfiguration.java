@@ -1,7 +1,8 @@
 package com.healthcore.healthcorecommon.tenant.config;
 
-import com.healthcore.healthcorecommon.tenant.persistence.TenantAspect;
-import com.healthcore.healthcorecommon.tenant.persistence.TenantHibernateInterceptor;
+import com.healthcore.healthcorecommon.tenant.filter.RequestContextFilter;
+import com.healthcore.healthcorecommon.tenant.persistence.TenantIdentifierResolver;
+import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,12 +10,12 @@ import org.springframework.context.annotation.Configuration;
 public class TenantAutoConfiguration {
 
     @Bean
-    public TenantHibernateInterceptor tenantHibernateInterceptor() {
-        return new TenantHibernateInterceptor();
+    public RequestContextFilter tenantRequestContextFilter() {
+        return new RequestContextFilter();
     }
 
     @Bean
-    public TenantAspect tenantAspect(TenantHibernateInterceptor interceptor) {
-        return new TenantAspect(interceptor);
+    public CurrentTenantIdentifierResolver<String> tenantIdentifierResolver() {
+        return new TenantIdentifierResolver();
     }
 }

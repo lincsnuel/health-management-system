@@ -6,6 +6,5 @@ import java.util.UUID;
 
 public record UpdatePatientStatusCommand(
         UUID patientId,
-        String tenantId,
         PatientStatus status
 ) {}
