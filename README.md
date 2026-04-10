@@ -1,6 +1,6 @@
 # Multi-Tenant Healthcare SaaS Platform
 [![Java](https://img.shields.io/badge/Java-17%2B-orange)](https://www.oracle.com/java/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.x-brightgreen)](https://spring.io/projects/spring-boot)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 An API-first, microservices-based backend engineered for high-scale healthcare providers (hospitals, labs, and clinics). This platform is built with a "Security-by-Design" approach, ensuring strict tenant-level data isolation and high availability.
