@@ -22,7 +22,7 @@ The system follows a **Hexagonal (Ports & Adapters) Architecture** to decouple d
 ---
 
 ## 🛠 Tech Stack
-* **Backend:** Java 17, Spring Boot 4, Spring WebFlux (Reactive Stack)
+* **Backend:** Java 25, Spring Boot 4, Spring WebFlux (Reactive Stack)
 * **Database:** PostgreSQL (R2DBC for non-blocking I/O)
 * **Caching:** Redis (Global Cache/OTP), Caffeine (Local Gateway Cache)
 * **Communication:** gRPC, REST
