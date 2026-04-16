@@ -114,6 +114,7 @@ public class Patient {
     /* ================= FACTORY ================= */
 
     public static Patient register(
+            PatientId patientId,
             HospitalPatientNumber hospitalPatientNumber,
             PersonName name,
             DateOfBirth dateOfBirth,
@@ -123,7 +124,7 @@ public class Patient {
     ) {
 
         Patient patient = new Patient(
-                PatientId.newId(),
+                patientId,
                 hospitalPatientNumber,
                 name,
                 dateOfBirth,

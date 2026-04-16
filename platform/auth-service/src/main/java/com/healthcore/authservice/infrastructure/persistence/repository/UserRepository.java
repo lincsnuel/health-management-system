@@ -13,4 +13,5 @@ public interface UserRepository extends ReactiveCrudRepository<User, String> {
     Mono<Boolean> existsByEmailAndTenantId(String email, String tenantId);
 
     Mono<Boolean> existsByPhoneNumberAndTenantId(String phoneNumber, String tenantId);
+
 }

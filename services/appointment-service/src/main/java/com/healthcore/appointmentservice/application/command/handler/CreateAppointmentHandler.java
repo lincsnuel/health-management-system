@@ -6,10 +6,12 @@ import com.healthcore.appointmentservice.application.command.port.BillingService
 import com.healthcore.appointmentservice.application.command.port.IdempotencyService;
 import com.healthcore.appointmentservice.application.command.port.ScheduleServiceClient;
 import com.healthcore.appointmentservice.domain.model.appointment.Appointment;
+import com.healthcore.appointmentservice.domain.model.schedule.DepartmentScheduleProjection;
 import com.healthcore.appointmentservice.domain.policy.BookingPolicy;
 import com.healthcore.appointmentservice.domain.repository.AppointmentCommandRepository;
+import com.healthcore.appointmentservice.domain.repository.AppointmentRepository;
+import com.healthcore.appointmentservice.domain.repository.DepartmentScheduleProjectionRepository;
 import com.healthcore.appointmentservice.domain.service.AppointmentDomainService;
-import com.healthcore.appointmentservice.domain.service.Availability;
 import com.healthcore.appointmentservice.domain.model.vo.*;
 import lombok.RequiredArgsConstructor;
 
@@ -19,11 +21,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CreateAppointmentHandler {
 
-    private final AppointmentCommandRepository repository;
-    private final ScheduleServiceClient scheduleClient;
-    private final BillingServiceClient billingClient;
+    private final AppointmentRepository appointmentRepository;
+    private final DepartmentScheduleProjectionRepository scheduleRepository;
     private final AppointmentDomainService domainService;
     private final BookingPolicy bookingPolicy;
+    private final BillingServiceClient billingClient;
     private final IdempotencyService idempotencyService;
 
     public AppointmentResponse handle(CreateAppointmentCommand cmd) {
@@ -34,16 +36,30 @@ public class CreateAppointmentHandler {
             return AppointmentResponse.from(existingId, "PENDING_PAYMENT");
         }
 
-        // 1. Check availability (gRPC)
-        Availability availability = scheduleClient.checkAvailability(
+        // 1. Load schedule projection
+        DepartmentScheduleProjection schedule =
+                scheduleRepository.findByTenantAndDepartment(
+                        cmd.tenantId,
+                        cmd.departmentId
+                ).orElseThrow(() -> new IllegalStateException("No schedule found"));
+
+        // 2. Count existing bookings
+        int booked = appointmentRepository.countConfirmedByDateAndSlot(
+                cmd.tenantId,
                 cmd.departmentId,
                 cmd.date,
                 cmd.timeSlot
         );
 
-        domainService.validateBooking(availability);
+        // 3. Validate availability
+        domainService.validateBooking(
+                schedule,
+                cmd.date,
+                cmd.timeSlot,
+                booked
+        );
 
-        // 2. Create domain object
+        // 4. Create appointment
         Appointment appointment = Appointment.create(
                 new TenantId(cmd.tenantId),
                 new PatientId(cmd.patientId),
@@ -51,13 +67,13 @@ public class CreateAppointmentHandler {
                 cmd.date,
                 cmd.timeSlot,
                 cmd.symptom,
-                null,
-                List.of(),
+                new ReferralDetails(cmd.referringHospital, cmd.notes),
+                cmd.attachments,
                 bookingPolicy
         );
 
-        // 3. Persist
-        repository.save(appointment);
+        // 5. Persist
+        appointmentRepository.save(appointment);
 
         // 4. Create billing (gRPC)
         UUID billingId = billingClient.createInvoice(

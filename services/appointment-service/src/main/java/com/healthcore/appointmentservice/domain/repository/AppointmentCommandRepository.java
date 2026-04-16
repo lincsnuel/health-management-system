@@ -17,7 +17,7 @@ public interface AppointmentCommandRepository {
             LocalDate dateOfBirth
     );
 
-    Appointment save(Appointment appointment);
+    void save(Appointment appointment);
 
     Optional<Appointment> findById(UUID appointmentId, UUID tenantId);
 }

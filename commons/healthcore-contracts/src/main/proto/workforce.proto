@@ -5,52 +5,52 @@ package workforce;
 option java_package = "com.healthcore.contracts.workforce";
 option java_multiple_files = true;
 
-// --------------------
-// Shared Messages
-// --------------------
-
+// =========================
+// DATE VALUE OBJECT
+// =========================
 message Date {
   int32 year = 1;
   int32 month = 2;
   int32 day = 3;
 }
 
-// --------------------
-// Request / Response
-// --------------------
-
+// =========================
+// REGISTER STAFF REQUEST
+// =========================
 message RegisterStaffProtoRequest {
-  string tenant_id = 1;
-  string department_id = 2;
 
-  string first_name = 3;
-  string middle_name = 4;
-  string last_name = 5;
+  // Organization
+  string department_id = 1;
 
-  string email = 6;
-  string phone_number = 7;
+  // Personal Identity
+  string first_name = 2;
+  string middle_name = 3;
+  string last_name = 4;
+  string email = 5;
+  string phone_number = 6;
+  string gender = 7;
+  Date date_of_birth = 8;
 
-  // Enums represented as strings
-  string gender = 8;
-  Date date_of_birth = 9;
+  // Classification
+  string staff_type = 9;
 
-  string staff_type = 10;
-
-  string identity_type = 11;
-  string identity_number = 12;
-  repeated string roles = 13;
+  // Access Control
+  repeated string roles = 10;
 }
 
+// =========================
+// RESPONSE
+// =========================
 message RegisterStaffProtoResponse {
   string staff_id = 1;
   bool success = 2;
   string message = 3;
 }
 
-// --------------------
-// Service
-// --------------------
-
+// =========================
+// SERVICE
+// =========================
 service WorkforceService {
-  rpc RegisterStaff(RegisterStaffProtoRequest) returns (RegisterStaffProtoResponse);
+  rpc RegisterStaff(RegisterStaffProtoRequest)
+      returns (RegisterStaffProtoResponse);
 }

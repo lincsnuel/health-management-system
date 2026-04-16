@@ -12,8 +12,4 @@ public record PatientId(UUID value) {
     public static PatientId of(UUID id) {
         return new PatientId(id);
     }
-
-    public static PatientId newId() {
-        return new PatientId(UUID.randomUUID());
-    }
 }

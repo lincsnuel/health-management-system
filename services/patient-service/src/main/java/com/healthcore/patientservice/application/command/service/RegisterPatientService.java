@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -62,6 +63,7 @@ public class RegisterPatientService implements RegisterPatientUseCase {
 
         // Create patient aggregate
         Patient patient = Patient.register(
+                PatientId.of(UUID.fromString(RequestContext.getUserId())),
                 HospitalPatientNumber.of(command.hospitalPatientNumber()),
                 PersonName.of(command.firstName(), command.lastName()),
                 DateOfBirth.of(command.dateOfBirth()),

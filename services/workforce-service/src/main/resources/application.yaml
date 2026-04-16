@@ -31,6 +31,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
+    properties:
+      hibernate:
+        # Link the property to resolver class
+        tenant_identifier_resolver: com.healthcore.healthcorecommon.tenant.persistence.TenantIdentifierResolver
   #  sql:
   #    init:
   #      mode: always
@@ -44,6 +49,3 @@ spring:
 redis:
   host: localhost
   port: 6379
-
-#kafka:
-#  bootstrap-servers: localhost:9094

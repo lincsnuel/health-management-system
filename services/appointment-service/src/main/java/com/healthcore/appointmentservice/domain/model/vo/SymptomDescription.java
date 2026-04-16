@@ -5,7 +5,7 @@ public class SymptomDescription {
     private final String value;
 
     private SymptomDescription(String value) {
-        if (value != null && value.length() > 1000) {
+        if (value != null && value.length() > 300) {
             throw new IllegalArgumentException("Symptom description too long");
         }
         this.value = value;

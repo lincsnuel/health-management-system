@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Entity
-@Table(name = "appointments")
+@Table(name = "appointment")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -49,7 +49,7 @@ public class AppointmentEntity {
 
     @ElementCollection
     @CollectionTable(
-            name = "appointment_attachments",
+            name = "appointment_attachment",
             joinColumns = @JoinColumn(name = "appointment_id")
     )
     private List<AttachmentEmbeddable> attachments = new ArrayList<>();

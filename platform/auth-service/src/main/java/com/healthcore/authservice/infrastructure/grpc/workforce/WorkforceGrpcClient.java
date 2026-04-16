@@ -3,12 +3,17 @@ package com.healthcore.authservice.infrastructure.grpc.workforce;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.healthcore.contracts.workforce.*;
 import com.healthcore.authservice.application.staff.dto.request.RegisterStaffRequest;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+
+import static com.healthcore.authservice.infrastructure.grpc.common.Header.*;
+import static com.healthcore.authservice.infrastructure.grpc.common.Header.ROLES;
 
 @Slf4j
 @Component
@@ -17,15 +22,53 @@ public class WorkforceGrpcClient {
 
     private final WorkforceServiceGrpc.WorkforceServiceFutureStub workforceFutureStub;
 
+    private final WorkforceServiceGrpc.WorkforceServiceFutureStub baseStub;
+
+
+    /**
+     * Creates a new header interceptor and applies it to the baseStub.
+     */
+    private WorkforceServiceGrpc.WorkforceServiceFutureStub attachContext(
+            String tenantId,
+            String userId,
+            String userType,
+            String roles
+    ) {
+        Metadata metadata = new Metadata();
+
+        // Tenant ID is mandatory for multi-tenant data isolation
+        if (tenantId != null) {
+            metadata.put(TENANT_ID, tenantId);
+        }
+
+        // Optional security context fields
+        if (userId != null) metadata.put(USER_ID, userId);
+        if (userType != null) metadata.put(USER_TYPE, userType);
+        if (roles != null) metadata.put(ROLES, roles);
+
+        /* * FIX: MetadataUtils.newAttachHeadersInterceptor creates a ClientInterceptor.
+         * We then use baseStub.withInterceptors() to return a new stub instance
+         * that will include these headers in the call.
+         */
+        return baseStub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata));
+    }
+
     /**
      * Registers a staff member asynchronously via gRPC
      */
-    public ListenableFuture<RegisterStaffProtoResponse> registerStaff(RegisterStaffRequest dto, String tenantId) {
+    public ListenableFuture<RegisterStaffProtoResponse> registerStaff(
+            RegisterStaffRequest dto,
+            String tenantId,
+            String staffId
+    ) {
 
         log.info("Sending async gRPC request to register staff: {}", dto.getEmail());
 
+        // Create a scoped stub with tenant headers
+        var stub = attachContext(tenantId, staffId, null, null);
+
         RegisterStaffProtoRequest request = RegisterStaffProtoRequest.newBuilder()
-                .setTenantId(tenantId)
+                .setStaffId(staffId)
                 .setDepartmentId(dto.getDepartmentId())
                 .setFirstName(dto.getFirstName())
                 .setMiddleName(nullSafe(dto.getMiddleName()))
@@ -41,7 +84,7 @@ public class WorkforceGrpcClient {
                 .build();
 
         // Returns immediately with a ListenableFuture
-        return workforceFutureStub.registerStaff(request);
+        return stub.registerStaff(request);
     }
 
     /**

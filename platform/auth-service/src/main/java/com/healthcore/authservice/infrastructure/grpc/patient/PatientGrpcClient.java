@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import static com.healthcore.authservice.infrastructure.grpc.common.Header.*;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -15,21 +17,8 @@ public class PatientGrpcClient {
 
     private final PatientServiceGrpc.PatientServiceFutureStub baseStub;
 
-    // Standard Metadata keys for cross-service context propagation
-    private static final Metadata.Key<String> TENANT_ID =
-            Metadata.Key.of("x-tenant-id", Metadata.ASCII_STRING_MARSHALLER);
-
-    private static final Metadata.Key<String> USER_ID =
-            Metadata.Key.of("x-user-id", Metadata.ASCII_STRING_MARSHALLER);
-
-    private static final Metadata.Key<String> USER_TYPE =
-            Metadata.Key.of("x-user-type", Metadata.ASCII_STRING_MARSHALLER);
-
-    private static final Metadata.Key<String> ROLES =
-            Metadata.Key.of("x-roles", Metadata.ASCII_STRING_MARSHALLER);
 
     /**
-     * Replaces the deprecated attachHeaders.
      * Creates a new header interceptor and applies it to the baseStub.
      */
     private PatientServiceGrpc.PatientServiceFutureStub attachContext(
@@ -64,7 +53,7 @@ public class PatientGrpcClient {
         log.info("gRPC → Register Patient (tenant={})", tenantId);
 
         // Create a scoped stub with tenant headers
-        var stub = attachContext(tenantId, null, null, null);
+        var stub = attachContext(tenantId, request.getPatientId(), null, null);
 
         return stub.registerPatient(request);
     }

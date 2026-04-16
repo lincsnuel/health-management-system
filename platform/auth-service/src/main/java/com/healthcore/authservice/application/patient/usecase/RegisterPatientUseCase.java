@@ -15,9 +15,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -28,45 +30,55 @@ public class RegisterPatientUseCase {
     private final PatientGrpcClient patientClient;
     private final UserRepository userRepository;
 
+    @Transactional // Database rollback triggers on Mono.error()
     public Mono<String> execute(RegisterPatientRequest request) {
+        // 1. Unified ID across services
+        String localPatientId = UUID.randomUUID().toString();
+
         return TenantContext.getTenantId()
                 .switchIfEmpty(Mono.error(new IllegalStateException("Tenant ID missing")))
-                .flatMap(tenantId -> toMono(patientClient.registerPatient(
-                        mapToGrpcRequest(request), tenantId))
-                        .flatMap(response -> {
-                            if (!response.getSuccess()) {
-                                log.warn("Patient registration rejected by Patient Service: {}", response.getMessage());
-                                return Mono.error(new RuntimeException(response.getMessage()));
-                            }
+                .flatMap(tenantId ->
+                        // 2. Fail-fast check
+                        userRepository.findByEmailAndTenantId(request.email(), tenantId)
+                                .flatMap(_ -> Mono.<User>error(new RuntimeException("Patient email already registered")))
 
-                            String patientId = response.getPatientId();
-                            String normalizedPhone = request.contactNumber().trim();
+                                // 3. Initial local save (Transaction scope)
+                                .switchIfEmpty(savePendingUser(request, tenantId, localPatientId))
 
-                            log.info("Registering new Patient User in Auth System: patientId={}, tenantId={}",
-                                    patientId, tenantId);
-
-                            // We use the safer Persistable pattern here
-                            User user = User.builder()
-                                    .id(patientId) // External ID from gRPC response
-                                    .email(request.email())
-                                    .phoneNumber(normalizedPhone)
-                                    .tenantId(tenantId)
-                                    .userType(UserType.PATIENT)
-                                    .isEnabled(true)
-                                    .isNew(true) // EXPLICIT: Tells R2DBC to perform INSERT, not UPDATE
-                                    .build();
-
-                            return userRepository.save(user)
-                                    .doOnSuccess(_ -> log.debug("Auth record created for patient: {}", patientId))
-                                    .thenReturn(patientId);
-                        }))
-                .doOnError(e -> log.error("Critical failure during patient registration: {}", e.getMessage()));
+                                // 4. Bridge to Patient Service
+                                .flatMap(_ ->
+                                        toMono(patientClient.registerPatient(mapToGrpcRequest(request, localPatientId), tenantId))
+                                                .flatMap(response -> {
+                                                    if (!response.getSuccess()) {
+                                                        // This error triggers @Transactional rollback
+                                                        return Mono.error(new RuntimeException("Patient service rejected registration: " + response.getMessage()));
+                                                    }
+                                                    log.info("Patient registration sync successful: {}", localPatientId);
+                                                    return Mono.just(localPatientId);
+                                                })
+                                )
+                )
+                .doOnError(e -> log.error("Patient registration failed. Transaction rolling back. Error: {}", e.getMessage()));
     }
 
-    // --- Helper Methods remain largely the same but ensure they are called within the reactive chain ---
+    private Mono<User> savePendingUser(RegisterPatientRequest request, String tenantId, String id) {
+        User user = User.builder()
+                .id(id)
+                .email(request.email())
+                .phoneNumber(request.contactNumber().trim())
+                .tenantId(tenantId)
+                .userType(UserType.PATIENT)
+                .isEnabled(true)
+                .isNew(true)
+                .build();
 
-    private RegisterPatientProtoRequest mapToGrpcRequest(RegisterPatientRequest req) {
+        return userRepository.save(user)
+                .doOnNext(_ -> log.debug("Pending auth record saved for patient: {}", id));
+    }
+
+    private RegisterPatientProtoRequest mapToGrpcRequest(RegisterPatientRequest req, String localId) {
         var builder = RegisterPatientProtoRequest.newBuilder()
+                .setPatientId(localId)
                 .setHospitalPatientNumber(req.hospitalPatientNumber())
                 .setFirstName(req.firstName())
                 .setLastName(req.lastName())
@@ -89,37 +101,24 @@ public class RegisterPatientUseCase {
 
         if (req.responsibleParties() != null) {
             builder.addAllResponsibleParties(req.responsibleParties().stream()
-                    .map(rp -> {
-                        assert req.address() != null;
-                        return ResponsibleParty.newBuilder()
-                                .setFirstName(rp.firstName())
-                                .setLastName(rp.lastName())
-                                .setType(normalize(rp.type()))
-                                .setRelationship(rp.relationship())
-                                .setContactNumber(rp.contactNumber())
-                                .setAddress(
-                                        Address.newBuilder()
-                                                .setStreet(req.address().street())
-                                                .setCity(req.address().city())
-                                                .setState(req.address().state())
-                                                .setCountry(req.address().country())
-                                                .build()
-                                )
-                                .build();
-                    })
+                    .map(rp -> ResponsibleParty.newBuilder()
+                            .setFirstName(rp.firstName())
+                            .setLastName(rp.lastName())
+                            .setType(normalize(rp.type()))
+                            .setRelationship(rp.relationship())
+                            .setContactNumber(rp.contactNumber())
+                            .setAddress(
+                                    rp.address() != null ?
+                                            Address.newBuilder()
+                                                    .setStreet(rp.address().street())
+                                                    .setCity(rp.address().city())
+                                                    .setState(rp.address().state())
+                                                    .setCountry(rp.address().country())
+                                                    .build().toBuilder()
+                                            : null
+                            )
+                            .build())
                     .collect(Collectors.toList()));
-        }
-
-        if (req.insurancePolicy() != null) {
-            var ins = req.insurancePolicy();
-            builder.setInsurancePolicy(InsurancePolicy.newBuilder()
-                    .setProviderName(ins.providerName())
-                    .setPolicyNumber(ins.policyNumber())
-                    .setPlanType(ins.planType() != null ? ins.planType() : "")
-                    .setCoverageStart(toDateMessage(ins.coverageStart()))
-                    .setCoverageEnd(toDateMessage(ins.coverageEnd()))
-                    .setMain(ins.main() != null && ins.main())
-                    .build());
         }
 
         return builder.build();
@@ -142,14 +141,9 @@ public class RegisterPatientUseCase {
         return Mono.create(sink ->
                 Futures.addCallback(future, new FutureCallback<>() {
                     @Override
-                    public void onSuccess(T result) {
-                        sink.success(result);
-                    }
-
+                    public void onSuccess(T result) { sink.success(result); }
                     @Override
-                    public void onFailure(@NonNull Throwable t) {
-                        sink.error(t);
-                    }
+                    public void onFailure(@NonNull Throwable t) { sink.error(t); }
                 }, MoreExecutors.directExecutor())
         );
     }

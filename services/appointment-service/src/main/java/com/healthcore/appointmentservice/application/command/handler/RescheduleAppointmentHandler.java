@@ -6,7 +6,6 @@ import com.healthcore.appointmentservice.domain.model.appointment.Appointment;
 import com.healthcore.appointmentservice.domain.policy.BookingPolicy;
 import com.healthcore.appointmentservice.domain.repository.AppointmentCommandRepository;
 import com.healthcore.appointmentservice.domain.service.AppointmentDomainService;
-import com.healthcore.appointmentservice.domain.service.Availability;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

@@ -250,8 +250,4 @@ public class Appointment {
 
         return appt;
     }
-
-    // ========================
-    // GETTERS (READ-ONLY)
-    // ========================
 }

@@ -20,8 +20,6 @@ public record AddressRequest(
 
         @NotBlank(message = "Country is required")
         @Size(max = 50)
-        String country,
-
-        Boolean primary
+        String country
 
 ) {}

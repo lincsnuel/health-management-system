@@ -5,7 +5,6 @@ package patient;
 option java_package = "com.healthcore.contracts.patient";
 option java_multiple_files = true;
 
-// Custom Date message to handle LocalDate fields
 message Date {
   int32 year = 1;
   int32 month = 2;
@@ -38,18 +37,19 @@ message ResponsibleParty {
 }
 
 message RegisterPatientProtoRequest {
-  string hospital_patient_number = 1;
-  string first_name = 2;
-  string last_name = 3;
-  Date date_of_birth = 4;
-  string gender = 5;
-  string email = 6;
-  string contact_number = 7;
-  string identity_type = 8;
-  string national_id_number = 9;
-  Address address = 10;
-  repeated ResponsibleParty responsible_parties = 11;
-  InsurancePolicy insurance_policy = 12;
+  string patient_id = 1;
+  string hospital_patient_number = 2;
+  string first_name = 3;
+  string last_name = 4;
+  Date date_of_birth = 5;
+  string gender = 6;
+  string email = 7;
+  string contact_number = 8;
+  string identity_type = 9;
+  string national_id_number = 10;
+  Address address = 11;
+  repeated ResponsibleParty responsible_parties = 12;
+  InsurancePolicy insurance_policy = 13;
 }
 
 message RegisterPatientProtoResponse {
@@ -59,8 +59,8 @@ message RegisterPatientProtoResponse {
 }
 
 message PatientRequest {
-  string patientId = 2;
-  string phoneNumber = 3;
+  string patientId = 1;
+  string phoneNumber = 2;
 }
 
 message PatientResponse {
@@ -71,10 +71,7 @@ message PatientResponse {
 }
 
 service PatientService {
-  // New registration RPC
   rpc RegisterPatient(RegisterPatientProtoRequest) returns (RegisterPatientProtoResponse);
-
-  // Existing RPCs
   rpc GetPatient(PatientRequest) returns (PatientResponse);
   rpc FindByPhone(PatientRequest) returns (PatientResponse);
 }
