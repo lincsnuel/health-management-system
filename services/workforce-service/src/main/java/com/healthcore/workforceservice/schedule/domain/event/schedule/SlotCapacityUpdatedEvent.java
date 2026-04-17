@@ -58,6 +58,6 @@ public class SlotCapacityUpdatedEvent extends DomainEvent {
 
     @Override
     public String getAggregateId() {
-        return "";
+        return slotId();
     }
 }

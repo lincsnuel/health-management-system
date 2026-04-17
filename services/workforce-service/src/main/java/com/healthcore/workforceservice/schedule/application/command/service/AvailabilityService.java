@@ -1,20 +1,24 @@
 package com.healthcore.workforceservice.schedule.application.command.service;
 
+import com.healthcore.workforceservice.schedule.application.command.model.AvailabilityCommand;
 import com.healthcore.workforceservice.schedule.application.command.usecase.AvailabilityUseCase;
 import com.healthcore.workforceservice.schedule.domain.event.schedule.DepartmentAvailabilityCalculatedEvent;
+import com.healthcore.workforceservice.schedule.domain.model.enums.ShiftType;
 import com.healthcore.workforceservice.schedule.domain.model.vo.DepartmentAvailability;
 import com.healthcore.workforceservice.schedule.domain.model.schedule.Schedule;
 import com.healthcore.workforceservice.schedule.domain.model.vo.SlotCapacity;
 import com.healthcore.workforceservice.schedule.domain.model.vo.TimeSlot;
 import com.healthcore.workforceservice.schedule.domain.repository.ScheduleRepository;
 import com.healthcore.workforceservice.schedule.domain.service.AvailabilityPolicyDomainService;
+import com.healthcore.workforceservice.schedule.domain.service.SchedulingEngine;
 import com.healthcore.workforceservice.shared.domain.vo.DepartmentId;
 import com.healthcore.workforceservice.shared.event.DomainEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,29 +28,35 @@ import java.util.stream.Collectors;
 @Transactional
 public class AvailabilityService implements AvailabilityUseCase {
 
+    private final SchedulingEngine schedulingEngine;
     private final AvailabilityPolicyDomainService policyService;
     private final ScheduleRepository scheduleRepository;
     private final DomainEventPublisher eventPublisher;
 
     @Override
-    public DepartmentAvailability compute(DepartmentId departmentId, LocalDate date) {
+    public DepartmentAvailability compute(AvailabilityCommand command) {
 
-        Schedule schedule = getSchedule(departmentId);
+        Schedule schedule = getSchedule(new DepartmentId(command.departmentId()));
 
-        DepartmentAvailability base = schedule.calculateAvailability(date);
+        DepartmentAvailability base = schedulingEngine.calculateAvailability(
+                schedule.getDepartmentSchedules(),
+                schedule.getStaffAllocations(),
+                schedule.getDepartmentId(),
+                command.date()
+        );
 
         return policyService.applyPolicy(
                 base,
-                2,      // min staff threshold
-                1.2                 // overbooking factor
+                base.totalRequired(),      // min staff threshold
+                command.overBookingFactor()     // overbooking factor
         );
     }
 
-    public Map<TimeSlot, Integer> computeAsMap(DepartmentId departmentId, LocalDate date) {
+    public Map<TimeSlot, Integer> computeAsMap(AvailabilityCommand command) {
 
-        DepartmentAvailability availability = compute(departmentId, date);
-
-        return availability.slotCapacities().stream()
+        return compute(command)
+                .slotCapacities()
+                .stream()
                 .collect(Collectors.toMap(
                         SlotCapacity::slot,
                         SlotCapacity::assignedStaff
@@ -54,20 +64,42 @@ public class AvailabilityService implements AvailabilityUseCase {
     }
 
     @Override
-    @Transactional
-    public void publish(DepartmentId departmentId, LocalDate date) {
+    public void publish(AvailabilityCommand command) {
 
-        Schedule schedule = getSchedule(departmentId);
+        Schedule schedule = getSchedule(new DepartmentId(command.departmentId()));
 
-        // 1. DOMAIN COMPUTATION
+        DepartmentAvailability availability = schedulingEngine.calculateAvailability(
+                schedule.getDepartmentSchedules(),
+                schedule.getStaffAllocations(),
+                schedule.getDepartmentId(),
+                command.date()
+        );
+
         DepartmentAvailabilityCalculatedEvent event =
-                schedule.calculateAndRaiseAvailability(date);
+                new DepartmentAvailabilityCalculatedEvent(
+                        command.departmentId(),
+                        command.date(),
+                        mapToShiftType(availability),
+                        LocalDateTime.now()
+                );
 
-        // 2. PERSIST (if needed for audit or state versioning)
         scheduleRepository.save(schedule);
 
-        // 3. PUBLISH (OUTBOX WILL PICK THIS UP IN REAL SYSTEM)
         eventPublisher.publish(List.of(event));
+    }
+
+    // ---------------------
+
+    private Map<ShiftType, Integer> mapToShiftType(DepartmentAvailability availability) {
+
+        Map<ShiftType, Integer> result = new EnumMap<>(ShiftType.class);
+
+        availability.slotCapacities().forEach(sc -> {
+            ShiftType type = schedulingEngine.resolveShiftType(sc.slot());
+            result.merge(type, sc.assignedStaff(), Integer::sum);
+        });
+
+        return result;
     }
 
     private Schedule getSchedule(DepartmentId departmentId) {

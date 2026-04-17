@@ -11,14 +11,22 @@ import java.util.UUID;
 public abstract class DomainEvent {
 
     private final String eventId;
-    private final LocalDateTime occurredOn;
 
     protected DomainEvent() {
         this.eventId = UUID.randomUUID().toString();
-        this.occurredOn = LocalDateTime.now();
     }
 
     public abstract LocalDateTime occurredAt();
 
+    /**
+     * Aggregate identifier (used as Kafka key)
+     */
     public abstract String getAggregateId();
+
+    /**
+     * REQUIRED for outbox partitioning & routing
+     */
+    public String getEventName() {
+        return this.getClass().getSimpleName();
+    }
 }

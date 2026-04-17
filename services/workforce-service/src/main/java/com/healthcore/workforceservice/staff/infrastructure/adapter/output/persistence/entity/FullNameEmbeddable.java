@@ -27,18 +27,6 @@ public class FullNameEmbeddable {
     private String middleName;
 
     /**
-     * Map from Domain VO to JPA Embeddable
-     */
-    public static FullNameEmbeddable fromDomain(FullName fullName) {
-        if (fullName == null) return null;
-        return new FullNameEmbeddable(
-                fullName.firstName(),
-                fullName.lastName(),
-                fullName.middleName()
-        );
-    }
-
-    /**
      * Map from JPA Embeddable back to Domain VO
      */
     public FullName toDomain() {

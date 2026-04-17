@@ -3,9 +3,7 @@ package com.healthcore.workforceservice.staff.infrastructure.adapter.output.pers
 import com.healthcore.healthcorecommon.domain.BaseEntity;
 import com.healthcore.workforceservice.staff.domain.model.enums.EmploymentType;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -15,7 +13,9 @@ import java.util.UUID;
         @Index(name = "idx_employment_staff_id", columnList = "staff_id")
 })
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class EmploymentEntity extends BaseEntity {
 
     @Id

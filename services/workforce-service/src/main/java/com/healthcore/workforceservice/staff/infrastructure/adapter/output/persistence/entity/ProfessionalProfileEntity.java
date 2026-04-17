@@ -2,9 +2,7 @@ package com.healthcore.workforceservice.staff.infrastructure.adapter.output.pers
 
 import com.healthcore.healthcorecommon.domain.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.UUID;
 
@@ -13,7 +11,9 @@ import java.util.UUID;
         @Index(name = "idx_profile_staff_id", columnList = "staff_id")
 })
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ProfessionalProfileEntity extends BaseEntity {
 
     @Id

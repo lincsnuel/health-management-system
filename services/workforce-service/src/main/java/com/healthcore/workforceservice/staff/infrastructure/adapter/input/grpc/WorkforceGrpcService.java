@@ -5,12 +5,15 @@ import com.healthcore.workforceservice.staff.application.command.model.RegisterS
 import com.healthcore.workforceservice.staff.application.command.usecase.RegisterStaffUseCase;
 import com.healthcore.workforceservice.staff.domain.model.enums.Gender;
 import com.healthcore.workforceservice.staff.domain.model.enums.StaffType;
+import com.healthcore.workforceservice.staff.domain.model.enums.EmploymentType; // Assuming this exists based on your DTO
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.time.LocalDate;
 
+@Slf4j
 @GrpcService
 @RequiredArgsConstructor
 public class WorkforceGrpcService extends WorkforceServiceGrpc.WorkforceServiceImplBase {
@@ -20,10 +23,10 @@ public class WorkforceGrpcService extends WorkforceServiceGrpc.WorkforceServiceI
     @Override
     public void registerStaff(RegisterStaffProtoRequest request,
                               StreamObserver<RegisterStaffProtoResponse> responseObserver) {
-
         try {
-            RegisterStaffCommand command = mapToCommand(request);
+            log.info("Received gRPC request to register staff: {}", request.getEmail());
 
+            RegisterStaffCommand command = mapToCommand(request);
             String staffId = registerStaffUseCase.registerStaff(command);
 
             responseObserver.onNext(
@@ -35,16 +38,23 @@ public class WorkforceGrpcService extends WorkforceServiceGrpc.WorkforceServiceI
             );
             responseObserver.onCompleted();
 
+        } catch (IllegalArgumentException ex) {
+            log.error("Validation error during staff registration: {}", ex.getMessage());
+            sendErrorResponse(responseObserver, ex.getMessage());
         } catch (Exception ex) {
-
-            responseObserver.onNext(
-                    RegisterStaffProtoResponse.newBuilder()
-                            .setSuccess(false)
-                            .setMessage(ex.getMessage())
-                            .build()
-            );
-            responseObserver.onCompleted();
+            log.error("Unexpected error during staff registration", ex);
+            sendErrorResponse(responseObserver, "Internal server error occurred");
         }
+    }
+
+    private void sendErrorResponse(StreamObserver<RegisterStaffProtoResponse> observer, String message) {
+        observer.onNext(
+                RegisterStaffProtoResponse.newBuilder()
+                        .setSuccess(false)
+                        .setMessage(message)
+                        .build()
+        );
+        observer.onCompleted();
     }
 
     // =========================
@@ -52,47 +62,33 @@ public class WorkforceGrpcService extends WorkforceServiceGrpc.WorkforceServiceI
     // =========================
 
     private RegisterStaffCommand mapToCommand(RegisterStaffProtoRequest request) {
-
         return new RegisterStaffCommand(
-
-                // =========================
-                // ORGANIZATION
-                // =========================
+                // Organization
                 request.getDepartmentId(),
 
-                // =========================
-                // PERSONAL INFO
-                // =========================
+                // Personal Info
                 request.getFirstName(),
                 nullToEmpty(request.getMiddleName()),
                 request.getLastName(),
                 request.getEmail(),
                 nullToEmpty(request.getPhoneNumber()),
                 parseGender(request.getGender()),
-                mapDate(request),
+                mapDateValue(request.getDateOfBirth(), "Date of Birth"),
 
-                // =========================
-                // STAFF CLASSIFICATION
-                // =========================
+                // Staff Classification
                 parseStaffType(request.getStaffType()),
 
-                // =========================
-                // EMPLOYMENT (future expansion handled elsewhere)
-                // =========================
-                null,   // employeeId
-                null,   // employmentType
-                null,   // dateOfHire
+                // Employment
+                nullToEmpty(request.getEmployeeId()),
+                parseEmploymentType(request.getEmploymentType()),
+                mapDateValue(request.getDateOfHire(), "Date of Hire"),
 
-                // =========================
-                // PROFESSIONAL PROFILE (optional onboarding expansion)
-                // =========================
-                null,   // specialization
-                null,   // academicTitle
-                false,  // isConsultant
+                // Professional Profile
+                nullToEmpty(request.getSpecialization()),
+                nullToEmpty(request.getAcademicTitle()),
+                request.getIsConsultant(),
 
-                // =========================
-                // ACCESS CONTROL
-                // =========================
+                // Access Control
                 request.getRolesList().stream()
                         .map(String::toUpperCase)
                         .toList()
@@ -104,6 +100,7 @@ public class WorkforceGrpcService extends WorkforceServiceGrpc.WorkforceServiceI
     // =========================
 
     private Gender parseGender(String value) {
+        if (value == null || value.isBlank()) return null;
         try {
             return Gender.valueOf(normalize(value));
         } catch (Exception e) {
@@ -112,6 +109,7 @@ public class WorkforceGrpcService extends WorkforceServiceGrpc.WorkforceServiceI
     }
 
     private StaffType parseStaffType(String value) {
+        if (value == null || value.isBlank()) return null;
         try {
             return StaffType.valueOf(normalize(value));
         } catch (Exception e) {
@@ -119,22 +117,30 @@ public class WorkforceGrpcService extends WorkforceServiceGrpc.WorkforceServiceI
         }
     }
 
+    private EmploymentType parseEmploymentType(String value) {
+        // If your Command/Domain uses a String for EmploymentType, use normalize.
+        // If it's an Enum, follow the parseStaffType pattern above.
+        return (value == null || value.isBlank()) ? null: EmploymentType.valueOf(normalize(value));
+    }
+
     // =========================
     // DATE MAPPING
     // =========================
 
-    private LocalDate mapDate(RegisterStaffProtoRequest request) {
-
-        if (request.getDateOfBirth() == null
-                || request.getDateOfBirth().getYear() == 0) {
-            throw new IllegalArgumentException("Invalid date of birth");
+    private LocalDate mapDateValue(Date protoDate, String fieldName) {
+        if (protoDate == null || protoDate.getYear() == 0) {
+            return null; // Return null for optional dates like Hire Date if not provided
         }
 
-        return LocalDate.of(
-                request.getDateOfBirth().getYear(),
-                request.getDateOfBirth().getMonth(),
-                request.getDateOfBirth().getDay()
-        );
+        try {
+            return LocalDate.of(
+                    protoDate.getYear(),
+                    protoDate.getMonth(),
+                    protoDate.getDay()
+            );
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid " + fieldName + ": " + e.getMessage());
+        }
     }
 
     // =========================
@@ -142,7 +148,7 @@ public class WorkforceGrpcService extends WorkforceServiceGrpc.WorkforceServiceI
     // =========================
 
     private String nullToEmpty(String value) {
-        return (value == null || value.isBlank()) ? null : value;
+        return (value == null || value.isBlank()) ? null : value.trim();
     }
 
     private String normalize(String value) {

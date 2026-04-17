@@ -23,9 +23,9 @@ public class TransferStaffDepartmentService {
     private final StaffTransferService transferService;
     private final DomainEventPublisher eventPublisher;
 
-    public void transfer(UUID staffId, UUID tenantId, String newDepartmentId) {
+    public void transfer(UUID staffId, String newDepartmentId) {
 
-        Staff staff = staffRepository.findById(staffId, tenantId)
+        Staff staff = staffRepository.findById(staffId)
                 .orElseThrow(() -> new IllegalStateException("Staff not found"));
 
         Employment employment = employmentRepository.findByStaffId(staff.getStaffId())
@@ -42,6 +42,6 @@ public class TransferStaffDepartmentService {
 
         // EVENTS
         eventPublisher.publish(staff.getEvents());
-        staff.clearEvents();
+        staff.clearDomainEvents();
     }
 }

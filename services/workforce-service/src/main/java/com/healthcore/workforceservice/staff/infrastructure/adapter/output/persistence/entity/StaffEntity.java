@@ -69,9 +69,6 @@ public class StaffEntity extends BaseTenantEntity {
     // RELATIONSHIPS
     // ======================
 
-    @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProfessionalLicenseEntity> licenses = new ArrayList<>();
-
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "staff_roles", joinColumns = @JoinColumn(name = "staff_id"))
     @Column(name = "role_name")

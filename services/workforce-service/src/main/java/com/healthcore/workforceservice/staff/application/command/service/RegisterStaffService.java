@@ -99,6 +99,6 @@ public class RegisterStaffService implements RegisterStaffUseCase {
 
     private void publish(Staff staff, StaffOnboardingResult result) {
         eventPublisher.publish(staff.getEvents());
-        staff.clearEvents();
+        staff.clearDomainEvents();
     }
 }

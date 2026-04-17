@@ -1,213 +1,274 @@
 package com.healthcore.workforceservice.schedule.infrastructure.adapter.output.persistence.mapper;
 
-import com.healthcore.workforceservice.schedule.domain.model.schedule.DepartmentSchedule;
-import com.healthcore.workforceservice.schedule.domain.model.schedule.Schedule;
-import com.healthcore.workforceservice.schedule.domain.model.schedule.StaffLeave;
-import com.healthcore.workforceservice.schedule.domain.model.schedule.StaffShift;
-import com.healthcore.workforceservice.schedule.domain.model.vo.RecurrencePattern;
-import com.healthcore.workforceservice.schedule.domain.model.vo.ScheduleId;
-import com.healthcore.workforceservice.schedule.domain.model.vo.TimeSlot;
-import com.healthcore.workforceservice.schedule.infrastructure.adapter.output.persistence.entity.schedule.*;
+import com.healthcore.workforceservice.schedule.domain.model.enums.LeaveType;
+import com.healthcore.workforceservice.schedule.domain.model.enums.ShiftType;
+import com.healthcore.workforceservice.schedule.domain.model.schedule.*;
+import com.healthcore.workforceservice.schedule.domain.model.vo.*;
+import com.healthcore.workforceservice.schedule.infrastructure.adapter.output.persistence.entity.*;
 import com.healthcore.workforceservice.shared.domain.vo.DepartmentId;
 import com.healthcore.workforceservice.shared.domain.vo.StaffId;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class SchedulePersistenceMapper {
 
-    // =========================
-    // DOMAIN → ENTITY (CREATE OR UPDATE)
-    // =========================
+    // =========================================================
+    // DOMAIN → ENTITY
+    // =========================================================
+
     public static ScheduleEntity toEntity(Schedule domain) {
 
-        ScheduleEntity entity;
+        ScheduleEntity entity = ScheduleEntity.builder()
+                .id(domain.getScheduleId().value())
+                .departmentId(domain.getDepartmentId().value())
+                .strategy(domain.getStrategy())
+                .build();
 
-        entity = new ScheduleEntity(
-                domain.getScheduleId().value(),
-                domain.getDepartmentId().value(),
-                domain.getStrategy(),
-                new ArrayList<>(),
-                new ArrayList<>(),
-                new ArrayList<>()
-        );
+        // -------------------------
+        // Department Schedule
+        // -------------------------
+        DepartmentScheduleEntity deptEntity =
+                toEntity(domain.getDepartmentSchedules(), domain.getDepartmentId());
 
-        // =========================
-        // MERGE CHILD COLLECTIONS
-        // =========================
+        entity.assignDepartmentSchedule(deptEntity);
 
-        mergeDepartmentSchedules(domain, entity);
-        mergeStaffShifts(domain, entity);
-        mergeStaffLeaves(domain, entity);
+        // -------------------------
+        // Staff Allocation
+        // -------------------------
+        StaffAllocationEntity staffEntity =
+                toEntity(domain.getStaffAllocations());
+
+        entity.assignStaffAllocation(staffEntity);
 
         return entity;
     }
 
-    // =========================
+    // =========================================================
     // ENTITY → DOMAIN
-    // =========================
+    // =========================================================
+
     public static Schedule toDomain(ScheduleEntity entity) {
 
         return Schedule.reconstruct(
                 new ScheduleId(entity.getId()),
                 new DepartmentId(entity.getDepartmentId()),
                 entity.getStrategy(),
-                mapDepartmentSchedules(entity),
-                mapStaffShifts(entity),
-                mapStaffLeaves(entity)
+                toDomainDepartmentAggregate(entity.getDepartmentSchedule()),
+                toDomainStaffAggregate(entity.getStaffAllocation())
         );
     }
 
     // =========================================================
-    // 🔥 MERGE LOGIC (CORE OF CORRECTNESS)
+    // DEPARTMENT SCHEDULE MAPPING
     // =========================================================
 
-    private static void mergeDepartmentSchedules(Schedule domain, ScheduleEntity entity) {
-
-        entity.clearDepartmentSchedules();
-
-        for (DepartmentSchedule ds : domain.getDepartmentSchedules()) {
-
-            DepartmentScheduleEntity child = mapDepartmentSchedule(ds);
-
-            entity.addDepartmentSchedule(child);
-        }
-    }
-
-    private static void mergeStaffShifts(Schedule domain, ScheduleEntity entity) {
-
-        entity.clearStaffShifts();
-
-        for (StaffShift shift : domain.getStaffShifts()) {
-
-            StaffShiftEntity child = mapStaffShift(shift);
-
-            entity.addStaffShift(child);
-        }
-    }
-
-    private static void mergeStaffLeaves(Schedule domain, ScheduleEntity entity) {
-
-        entity.clearStaffLeaves();
-
-        for (StaffLeave leave : domain.getStaffLeaves()) {
-
-            StaffLeaveEntity child = mapStaffLeave(leave);
-
-            entity.addStaffLeave(child);
-        }
-    }
-
-    // =========================================================
-    // 🔹 CHILD MAPPERS
-    // =========================================================
-
-    private static DepartmentScheduleEntity mapDepartmentSchedule(
-            DepartmentSchedule domain
+    private static DepartmentScheduleEntity toEntity(
+            DepartmentScheduleAggregate aggregate,
+            DepartmentId departmentId
     ) {
-        return DepartmentScheduleEntity.builder()
-                .id(domain.id())
-                .dayOfWeek(domain.dayOfWeek())
-                .slots(domain.activeSlots().stream()
-                        .map(SchedulePersistenceMapper::toEmbeddable)
-                        .toList())
+
+        DepartmentScheduleEntity entity = DepartmentScheduleEntity.builder()
+                .departmentId(departmentId.value())
+                .dayOfWeek(null) // filled per slot grouping below
                 .build();
+
+        // Flatten per-day schedules
+        aggregate.getSchedules().values().forEach(daySchedule -> {
+
+            DepartmentScheduleEntity dayEntity = DepartmentScheduleEntity.builder()
+                    .departmentId(departmentId.value())
+                    .dayOfWeek(daySchedule.dayOfWeek())
+                    .build();
+
+            daySchedule.activeSlots().forEach(slot -> {
+
+                Integer capacity = daySchedule.requiredStaffPerSlot().get(slot);
+
+                DepartmentSlotEntity slotEntity = DepartmentSlotEntity.builder()
+                        .startTime(slot.start())
+                        .endTime(slot.end())
+                        .requiredStaff(capacity)
+                        .build();
+
+                dayEntity.addSlot(slotEntity);
+            });
+
+            entity.getSlots().addAll(dayEntity.getSlots());
+        });
+
+        return entity;
     }
 
-    private static StaffShiftEntity mapStaffShift(
-            StaffShift domain
+    private static DepartmentScheduleAggregate toDomainDepartmentAggregate(
+            DepartmentScheduleEntity entity
     ) {
-        return StaffShiftEntity.builder()
-                .id(domain.id())
-                .staffId(domain.staffId().value())
-                .shiftType(domain.shiftType())
-                .timeSlot(toEmbeddable(domain.timeSlot()))
-                .recurrence(toEmbeddable(domain.recurrence()))
-                .build();
+
+        DepartmentScheduleAggregate aggregate =
+                new DepartmentScheduleAggregate(
+                        new DepartmentId(entity.getDepartmentId()),
+                        _ -> {}
+                );
+
+        // group slots by dayOfWeek
+        Map<java.time.DayOfWeek, List<DepartmentSlotEntity>> grouped =
+                entity.getSlots().stream()
+                        .collect(Collectors.groupingBy(
+                                s -> s.getDepartmentSchedule().getDayOfWeek()
+                        ));
+
+        grouped.forEach((day, slots) -> {
+
+            Map<TimeSlot, Integer> slotMap = new HashMap<>();
+
+            slots.forEach(s -> {
+                TimeSlot ts = new TimeSlot(s.getStartTime(), s.getEndTime());
+                slotMap.put(ts, s.getRequiredStaff());
+            });
+
+            aggregate.defineSchedule(day, slotMap);
+        });
+
+        return aggregate;
     }
 
-    private static StaffLeaveEntity mapStaffLeave(
-            StaffLeave domain
+    // =========================================================
+    // STAFF ALLOCATION MAPPING
+    // =========================================================
+
+    private static StaffAllocationEntity toEntity(StaffAllocationAggregate aggregate) {
+
+        StaffAllocationEntity entity = StaffAllocationEntity.builder()
+                .build();
+
+        // onboarded staff
+        aggregate.staffPool().forEach(staffId -> entity.getOnboardedStaff().add(staffId.value()));
+
+        // workload
+        aggregate.workload().forEach((staffId, value) ->
+                entity.getWorkload().put(staffId.value(), value)
+        );
+
+        // shifts
+        aggregate.shifts().forEach(shift -> {
+
+            StaffShiftEntity shiftEntity = StaffShiftEntity.builder()
+                    .staffId(shift.staffId().value())
+                    .shiftType(shift.shiftType().name())
+                    .startTime(shift.timeSlot().start())
+                    .endTime(shift.timeSlot().end())
+                    .recurrence(toEmbeddable(shift.recurrence()))
+                    .build();
+
+            entity.addShift(shiftEntity);
+        });
+
+        // leaves
+        aggregate.getLeaves().forEach(leave -> {
+
+            StaffLeaveEntity leaveEntity = StaffLeaveEntity.builder()
+                    .staffId(leave.staffId().value())
+                    .startDate(leave.startDate())
+                    .endDate(leave.endDate())
+                    .leaveType(leave.leaveType().name())
+                    .build();
+
+            entity.addLeave(leaveEntity);
+        });
+
+        return entity;
+    }
+
+    private static Map<StaffId, Integer> getWorkload(StaffAllocationAggregate aggregate) {
+        return aggregate.workload();
+    }
+
+    private static StaffAllocationAggregate toDomainStaffAggregate(
+            StaffAllocationEntity entity
     ) {
-        return StaffLeaveEntity.builder()
-                .id(domain.id())
-                .staffId(domain.staffId().value())
-                .startDate(domain.startDate())
-                .endDate(domain.endDate())
-                .leaveType(domain.leaveType())
-                .build();
+
+        StaffAllocationAggregate aggregate =
+                new StaffAllocationAggregate(_ -> {});
+
+        // onboard staff
+        entity.getOnboardedStaff()
+                .forEach(id -> aggregate.onboard(new StaffId(id)));
+
+        // workload
+        entity.getWorkload()
+                .forEach((id, w) ->
+                        getWorkload(aggregate).put(new StaffId(id), w)
+                );
+
+        // shifts
+        entity.getShifts().forEach(s -> {
+
+            StaffShift shift = new StaffShift(
+                    s.getId(),
+                    new StaffId(s.getStaffId()),
+                    ScheduleMapperUtil.toShiftType(s.getShiftType()),
+                    new TimeSlot(s.getStartTime(), s.getEndTime()),
+                    toDomain(s.getRecurrence())
+            );
+
+            aggregate.shifts().add(shift);
+        });
+
+        // leaves
+        entity.getLeaves().forEach(l -> {
+
+            StaffLeave leave = new StaffLeave(
+                    l.getId(),
+                    new StaffId(l.getStaffId()),
+                    l.getStartDate(),
+                    l.getEndDate(),
+                    ScheduleMapperUtil.toLeaveType(l.getLeaveType())
+            );
+
+            aggregate.getLeaves().add(leave);
+        });
+
+        return aggregate;
     }
 
     // =========================================================
-    // 🔹 ENTITY → DOMAIN HELPERS
+    // EMBEDDABLE MAPPING
     // =========================================================
 
-    private static List<DepartmentSchedule> mapDepartmentSchedules(ScheduleEntity entity) {
-        return entity.getDepartmentSchedules().stream()
-                .map(e -> new DepartmentSchedule(
-                        e.getId(),
-                        e.getDayOfWeek(),
-                        e.getSlots().stream()
-                                .map(SchedulePersistenceMapper::toDomain)
-                                .toList()
-                ))
-                .toList();
-    }
-
-    private static List<StaffShift> mapStaffShifts(ScheduleEntity entity) {
-        return entity.getStaffShifts().stream()
-                .map(e -> new StaffShift(
-                        e.getId(),
-                        new StaffId(e.getStaffId()),
-                        e.getShiftType(),
-                        toDomain(e.getTimeSlot()),
-                        toDomain(e.getRecurrence())
-                ))
-                .toList();
-    }
-
-    private static List<StaffLeave> mapStaffLeaves(ScheduleEntity entity) {
-        return entity.getStaffLeaves().stream()
-                .map(e -> new StaffLeave(
-                        e.getId(),
-                        new StaffId(e.getStaffId()),
-                        e.getStartDate(),
-                        e.getEndDate(),
-                        e.getLeaveType()
-                ))
-                .toList();
-    }
-
-    // =========================================================
-    // 🔹 EMBEDDABLE MAPPERS
-    // =========================================================
-
-    private static TimeSlotEmbeddable toEmbeddable(TimeSlot slot) {
-        return new TimeSlotEmbeddable(slot.start(), slot.end());
-    }
-
-    private static TimeSlot toDomain(TimeSlotEmbeddable embeddable) {
-        return new TimeSlot(embeddable.getStart(), embeddable.getEnd());
-    }
-
-    private static RecurrenceEmbeddable toEmbeddable(RecurrencePattern pattern) {
+    private static RecurrencePatternEmbeddable toEmbeddable(RecurrencePattern pattern) {
         if (pattern == null) return null;
 
-        return RecurrenceEmbeddable.builder()
-                .daysOfWeek(new HashSet<>(pattern.daysOfWeek()))
+        return RecurrencePatternEmbeddable.builder()
+                .daysOfWeek(pattern.daysOfWeek())
                 .startDate(pattern.startDate())
                 .endDate(pattern.endDate())
                 .build();
     }
 
-    private static RecurrencePattern toDomain(RecurrenceEmbeddable embeddable) {
+    private static RecurrencePattern toDomain(RecurrencePatternEmbeddable embeddable) {
         if (embeddable == null) return null;
 
         return new RecurrencePattern(
-                embeddable.getDaysOfWeek(),
+                embeddable.decodeDays(),
                 embeddable.getStartDate(),
                 embeddable.getEndDate()
         );
+    }
+
+    // =========================================================
+    // OPTIONAL UTIL MAPPER (TYPE SAFETY)
+    // =========================================================
+
+    static class ScheduleMapperUtil {
+
+        static ShiftType toShiftType(String value) {
+            return ShiftType.valueOf(value);
+        }
+
+        static LeaveType toLeaveType(String value) {
+            return LeaveType.valueOf(value);
+        }
     }
 }

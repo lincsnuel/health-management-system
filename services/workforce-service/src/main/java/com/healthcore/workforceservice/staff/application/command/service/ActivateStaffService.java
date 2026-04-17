@@ -28,9 +28,9 @@ public class ActivateStaffService implements ActivateStaffUseCase {
     private final CredentialValidationService credentialValidationService;
 
     @Override
-    public void activate(UUID staffId, UUID tenantId) {
+    public void activate(UUID staffId) {
 
-        Staff staff = staffRepository.findById(staffId, tenantId)
+        Staff staff = staffRepository.findById(staffId)
                 .orElseThrow(() -> new IllegalStateException("Staff not found"));
 
         Credentialing credentialing =
@@ -48,6 +48,6 @@ public class ActivateStaffService implements ActivateStaffUseCase {
 
         // 4. EVENTS
         eventPublisher.publish(staff.getEvents());
-        staff.clearEvents();
+        staff.clearDomainEvents();
     }
 }

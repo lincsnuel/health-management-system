@@ -15,8 +15,18 @@ public class KafkaProducerConfig {
     public ProducerFactory<String, String> producerFactory() {
         return new DefaultKafkaProducerFactory<>(Map.of(
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9094",
+
                 ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
+
+                // CRITICAL FOR RELIABILITY
+                ProducerConfig.ACKS_CONFIG, "all",
+                ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true,
+                ProducerConfig.RETRIES_CONFIG, 10,
+
+                // batching (performance)
+                ProducerConfig.LINGER_MS_CONFIG, 5,
+                ProducerConfig.BATCH_SIZE_CONFIG, 16384
         ));
     }
 

@@ -112,7 +112,7 @@ public class Staff {
         }
 
         // CRITICAL: no events during reconstruction
-        staff.clearEvents();
+        staff.clearDomainEvents();
 
         return staff;
     }
@@ -202,7 +202,7 @@ public class Staff {
         return List.copyOf(domainEvents);
     }
 
-    public void clearEvents() {
+    public void clearDomainEvents() {
         domainEvents.clear();
     }
 

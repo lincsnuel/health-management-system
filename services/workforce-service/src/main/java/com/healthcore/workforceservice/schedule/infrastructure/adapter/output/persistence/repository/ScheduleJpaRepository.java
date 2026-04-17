@@ -1,6 +1,6 @@
 package com.healthcore.workforceservice.schedule.infrastructure.adapter.output.persistence.repository;
 
-import com.healthcore.workforceservice.schedule.infrastructure.adapter.output.persistence.entity.schedule.ScheduleEntity;
+import com.healthcore.workforceservice.schedule.infrastructure.adapter.output.persistence.entity.ScheduleEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

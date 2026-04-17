@@ -15,7 +15,7 @@ public class StaffCreatedEvent extends DomainEvent {
 
     private final UUID staffId;
     private final String email;
-    private final LocalDateTime  occurredAt;
+    private final LocalDateTime occurredAt;
 
     @Override
     public LocalDateTime occurredAt() {

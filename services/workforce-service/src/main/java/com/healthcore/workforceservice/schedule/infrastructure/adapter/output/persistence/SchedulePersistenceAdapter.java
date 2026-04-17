@@ -3,11 +3,10 @@ package com.healthcore.workforceservice.schedule.infrastructure.adapter.output.p
 import com.healthcore.workforceservice.schedule.domain.model.schedule.Schedule;
 import com.healthcore.workforceservice.schedule.domain.model.vo.ScheduleId;
 import com.healthcore.workforceservice.schedule.domain.repository.ScheduleRepository;
-import com.healthcore.workforceservice.schedule.infrastructure.adapter.output.persistence.mapper.OutboxMapper;
 import com.healthcore.workforceservice.schedule.infrastructure.adapter.output.persistence.mapper.SchedulePersistenceMapper;
-import com.healthcore.workforceservice.schedule.infrastructure.adapter.output.persistence.repository.OutboxEventRepository;
 import com.healthcore.workforceservice.schedule.infrastructure.adapter.output.persistence.repository.ScheduleJpaRepository;
 import com.healthcore.workforceservice.shared.domain.vo.DepartmentId;
+import com.healthcore.workforceservice.shared.outbox.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +19,7 @@ import java.util.UUID;
 public class SchedulePersistenceAdapter implements ScheduleRepository {
 
     private final ScheduleJpaRepository scheduleJpaRepository;
-    private final OutboxEventRepository outboxRepository;
-    private final OutboxMapper mapper;
+    private final OutboxService outboxService;
 
     // =========================
     // READ OPERATIONS
@@ -59,14 +57,8 @@ public class SchedulePersistenceAdapter implements ScheduleRepository {
                 SchedulePersistenceMapper.toEntity(schedule)
         );
 
-        // 2. Persist domain events → outbox
-        schedule.getDomainEvents().forEach(event -> outboxRepository.save(
-                mapper.from(
-                        event,
-                        "SCHEDULE",
-                        schedule.getScheduleId().value()
-                )
-        ));
+        // 2. Persist domain events → shared outbox
+        outboxService.saveEvents(schedule.getDomainEvents());
 
         // 3. Clear events AFTER persistence
         schedule.clearDomainEvents();

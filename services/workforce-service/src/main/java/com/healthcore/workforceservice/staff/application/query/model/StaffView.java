@@ -1,5 +1,7 @@
 package com.healthcore.workforceservice.staff.application.query.model;
 
+import com.healthcore.workforceservice.staff.domain.model.enums.StaffStatus;
+
 import java.util.UUID;
 
 public record StaffView(
@@ -7,5 +9,5 @@ public record StaffView(
         String fullName,
         String email,
         String departmentName,
-        String status
+        StaffStatus status
 ) {}

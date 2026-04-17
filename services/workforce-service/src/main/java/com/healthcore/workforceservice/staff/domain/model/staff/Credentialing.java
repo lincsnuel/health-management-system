@@ -1,7 +1,7 @@
 package com.healthcore.workforceservice.staff.domain.model.staff;
 
 import com.healthcore.workforceservice.shared.domain.vo.StaffId;
-import com.healthcore.workforceservice.staff.domain.exception.DomainException;
+import com.healthcore.workforceservice.staff.domain.exception.LicenseNotFoundException;
 import com.healthcore.workforceservice.staff.domain.model.vo.CredentialingId;
 import lombok.Getter;
 
@@ -9,9 +9,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class Credentialing {
 
-    @Getter
     private final CredentialingId id;
     private final StaffId staffId;
 
@@ -22,15 +22,8 @@ public class Credentialing {
         this.staffId = staffId;
     }
 
-    public void issueLicense(String number, String body, LocalDate expiry) {
-        boolean exists = licenses.stream()
-                .anyMatch(l -> l.getLicenseNumber().equalsIgnoreCase(number));
-
-        if (exists) {
-            throw new DomainException("Duplicate license");
-        }
-
-        licenses.add(ProfessionalLicense.create(number, body, expiry));
+    public void loadLicense(ProfessionalLicense license) {
+        this.licenses.add(license);
     }
 
     public void renewLicense(String number, LocalDate expiry) {
@@ -49,6 +42,6 @@ public class Credentialing {
         return licenses.stream()
                 .filter(l -> l.getLicenseNumber().equalsIgnoreCase(number))
                 .findFirst()
-                .orElseThrow(() -> new DomainException("License not found"));
+                .orElseThrow(() -> new LicenseNotFoundException("License not found"));
     }
 }

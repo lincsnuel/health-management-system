@@ -1,9 +1,13 @@
 package com.healthcore.workforceservice.schedule.domain.event.schedule;
 
 import com.healthcore.workforceservice.shared.event.DomainEvent;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 
+@RequiredArgsConstructor
+@Getter
 public class DepartmentDeactivatedEvent extends DomainEvent {
 
     private final String departmentId;
@@ -16,16 +20,6 @@ public class DepartmentDeactivatedEvent extends DomainEvent {
 
     private final LocalDateTime occurredAt;
 
-    public DepartmentDeactivatedEvent(
-            String departmentId,
-            String reason,
-            boolean temporary
-    ) {
-        this.departmentId = departmentId;
-        this.reason = reason;
-        this.temporary = temporary;
-        this.occurredAt = LocalDateTime.now();
-    }
 
     public String departmentId() {
         return departmentId;
@@ -46,6 +40,6 @@ public class DepartmentDeactivatedEvent extends DomainEvent {
 
     @Override
     public String getAggregateId() {
-        return "";
+        return departmentId();
     }
 }

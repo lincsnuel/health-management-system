@@ -3,9 +3,7 @@ package com.healthcore.workforceservice.staff.infrastructure.adapter.output.pers
 import com.healthcore.healthcorecommon.domain.BaseEntity;
 import com.healthcore.workforceservice.staff.domain.model.enums.LicenseStatus;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 
@@ -15,7 +13,9 @@ import java.time.LocalDate;
         @Index(name = "idx_license_number", columnList = "licenseNumber")
 })
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ProfessionalLicenseEntity extends BaseEntity {
 
     @Id
@@ -34,7 +34,7 @@ public class ProfessionalLicenseEntity extends BaseEntity {
     @Column(nullable = false)
     private LicenseStatus status;
 
-    // FIXED OWNERSHIP
+    @Setter(AccessLevel.PACKAGE)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "credentialing_id", nullable = false)
     private CredentialingEntity credentialing;

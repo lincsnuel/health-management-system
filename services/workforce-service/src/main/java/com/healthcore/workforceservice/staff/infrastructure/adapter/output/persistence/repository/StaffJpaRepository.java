@@ -24,14 +24,14 @@ public interface StaffJpaRepository extends JpaRepository<StaffEntity, UUID> {
     );
 
     @Query("""
-        SELECT new com.healthcore.workforceservice.application.query.model.StaffView(
-            s.staffId,
-            CONCAT(s.fullName.firstName, ' ', s.fullName.lastName),
-            s.email,
-            s.departmentId,
-            CAST(s.status AS string)
-        )
-        FROM StaffEntity s
-    """)
+    SELECT new com.healthcore.workforceservice.staff.application.query.model.StaffView(
+        s.staffId,
+        CONCAT(s.fullName.firstName, ' ', s.fullName.lastName),
+        s.email,
+        s.departmentId,
+        s.status
+    )
+    FROM StaffEntity s
+""")
     Page<StaffView> findByTenantId(Pageable pageable);
 }

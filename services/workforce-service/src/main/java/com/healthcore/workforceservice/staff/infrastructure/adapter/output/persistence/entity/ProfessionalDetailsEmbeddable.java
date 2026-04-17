@@ -28,18 +28,6 @@ public class ProfessionalDetailsEmbeddable {
     private boolean isConsultant;
 
     /**
-     * Maps from Domain VO to JPA Embeddable.
-     */
-    public static ProfessionalDetailsEmbeddable fromDomain(ProfessionalDetails details) {
-        if (details == null) return null;
-        return new ProfessionalDetailsEmbeddable(
-                details.primarySpecialization(),
-                details.academicTitle(),
-                details.isConsultant()
-        );
-    }
-
-    /**
      * Maps from JPA Embeddable back to Domain VO.
      */
     public ProfessionalDetails toDomain() {

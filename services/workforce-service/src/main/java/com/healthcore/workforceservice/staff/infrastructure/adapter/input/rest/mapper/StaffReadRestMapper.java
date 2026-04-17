@@ -14,7 +14,7 @@ public class StaffReadRestMapper {
                 staff.fullName(),
                 staff.email(),
                 staff.departmentName(),
-                staff.status()
+                staff.status().toString()
         );
     }
 }

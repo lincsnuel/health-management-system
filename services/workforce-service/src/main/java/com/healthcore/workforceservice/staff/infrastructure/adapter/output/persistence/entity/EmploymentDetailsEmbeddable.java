@@ -34,18 +34,6 @@ public class EmploymentDetailsEmbeddable {
     private LocalDate dateHired;
 
     /**
-     * Maps from Domain VO to JPA Embeddable.
-     */
-    public static EmploymentDetailsEmbeddable fromDomain(EmploymentDetails details) {
-        if (details == null) return null;
-        return new EmploymentDetailsEmbeddable(
-                details.employeeId(),
-                details.type(),
-                details.dateHired()
-        );
-    }
-
-    /**
      * Maps from JPA Embeddable back to Domain VO.
      */
     public EmploymentDetails toDomain() {

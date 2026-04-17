@@ -10,7 +10,7 @@ public interface StaffCommandRepository {
 
     Staff save(Staff staff);
 
-    Optional<Staff> findById(UUID staffId,  UUID tenantId);
+    Optional<Staff> findById(UUID staffId);
 
     Optional<Staff> findByEmail(String email);
 

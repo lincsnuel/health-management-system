@@ -19,7 +19,7 @@ message Date {
 // =========================
 message RegisterStaffProtoRequest {
 
-  // Organization
+  // Organization Context
   string department_id = 1;
 
   // Personal Identity
@@ -28,11 +28,21 @@ message RegisterStaffProtoRequest {
   string last_name = 4;
   string email = 5;
   string phone_number = 6;
-  string gender = 7;
+  string gender = 7;           // Maps to Gender enum in Java
   Date date_of_birth = 8;
 
-  // Classification
-  string staff_type = 9;
+  // Staff Classification
+  string staff_type = 9;       // Maps to StaffType enum in Java
+
+  // Employment
+  string employee_id = 11;
+  string employment_type = 12; // Maps to EmploymentType enum in Java
+  Date date_of_hire = 13;
+
+  // Professional Profile
+  string specialization = 14;
+  string academic_title = 15;
+  bool is_consultant = 16;
 
   // Access Control
   repeated string roles = 10;
